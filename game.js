@@ -3,6 +3,7 @@
   const E = globalThis.WordPopEngine, dictionary = globalThis.WordPopWords;
   const $ = id => document.getElementById(id);
   $('vocabulary-count').textContent = dictionary.size.toLocaleString('ja-JP');
+  const easyWords = globalThis.WordPopEasyWords;
   const boardElement = $('board'), tiles = $('tiles');
   const tutorialPath = [16, 17, 18];
   const storageKey = 'word-pop-tutorial-complete-v1';
@@ -103,36 +104,62 @@
       try { localStorage.setItem(storageKey, 'true'); } catch { /* 保存不可なら次回も案内します。 */ }
     }
     $('tutorial').hidden = true;
+    $('chain-banner').hidden = true;
     $('hint-line').setAttribute('points', '');
     $('selected-line').setAttribute('points', '');
-    selected.forEach(index => tiles.children[index].classList.add('popping'));
-    message(`${word}！ +${word.length * 10} pt　いいね、その調子！`);
-    await delay(240);
-    const result = E.collapse(board, selected);
-    board = result.board;
-    const rescued = E.ensurePlayable(board, dictionary);
-    if (rescued) [49, 50, 51].forEach(index => { result.distances[index] = 1; });
-    path = [];
-    render(result.distances);
-    await delay(380);
-    score += word.length * 10;
-    found.push(word);
-    $('score').textContent = score;
-    $('found-count').textContent = found.length;
-    const chip = document.createElement('span');
-    chip.className = 'word-chip';
-    chip.textContent = word;
-    if (found.length === 1) $('found-words').replaceChildren();
-    $('found-words').prepend(chip);
-    // 画面上の履歴は直近30件。永続コレクションは次の開発段階で追加します。
-    while ($('found-words').children.length > 30) $('found-words').lastElementChild.remove();
-    if (rescued) message('次の単語も見つけられるよう、盤面に CAT を追加したよ。');
-    busy = false;
-    $('restart-button').disabled = false;
-    $('submit-button').disabled = false;
-    boardElement.setAttribute('aria-busy', 'false');
-    [...tiles.children].forEach(tile => tile.classList.remove('falling'));
+    const chainEnabled = $('chain-toggle').checked;
+    $('chain-toggle').disabled = true;
+    let match = {word, path: selected}, chain = 1;
+    try {
+      while (match) {
+        const earned = match.word.length * 10 * chain;
+        if (chain > 1) {
+          $('chain-banner').hidden = false;
+          $('chain-banner').textContent = `${chain} CHAIN!  ${match.word}  +${earned} pt`;
+          match.path.forEach(index => tiles.children[index].classList.add('chain-ready'));
+          message(`落下で ${match.word} がそろった！ ${chain}連鎖！`);
+          await delay(600);
+        } else {
+          message(`${match.word}！ +${earned} pt`);
+        }
+        match.path.forEach(index => tiles.children[index].classList.add('popping'));
+        await delay(240);
+        const before = [...board];
+        const result = E.friendlyRefill(E.collapse(board, match.path), easyWords);
+        board = result.board;
+        path = [];
+        render(result.distances);
+        await delay(380);
+        score += earned;
+        found.push(match.word);
+        $('score').textContent = score;
+        $('found-count').textContent = found.length;
+        const chip = document.createElement('span');
+        chip.className = 'word-chip';
+        chip.textContent = chain > 1 ? `${match.word} ×${chain}` : match.word;
+        if (found.length === 1) $('found-words').replaceChildren();
+        $('found-words').prepend(chip);
+        while ($('found-words').children.length > 30) $('found-words').lastElementChild.remove();
+        match = chainEnabled && chain <= E.MAX_CASCADES
+          ? E.findCascade(before, board, result.distances, easyWords) : null;
+        if (match) chain++;
+      }
+      // 3,000語のどれかではなく、身近な短い語を最低1つ残します。
+      const rescued = E.ensurePlayable(board, easyWords);
+      if (rescued) render();
+      const count = new Set(E.straightWords(board, easyWords).map(m => m.word)).size;
+      $('available-count').textContent = `見つけやすい単語 ${count} 個`;
+      message(chain > 1 ? `${chain}連鎖！ 次の単語も一直線に探してみよう。` : 'いいね！ 次の単語もまっすぐ探してみよう。');
+    } finally {
+      busy = false;
+      $('restart-button').disabled = false;
+      $('submit-button').disabled = false;
+      $('chain-toggle').disabled = false;
+      boardElement.setAttribute('aria-busy', 'false');
+      [...tiles.children].forEach(tile => tile.classList.remove('falling', 'chain-ready'));
+    }
   }
+
   function start() {
     if (busy) return;
     releasePointer();
@@ -146,6 +173,8 @@
     $('found-words').replaceChildren(empty);
     $('tutorial').hidden = tutorialComplete;
     message(tutorialComplete ? '3〜6文字の英単語を探してみよう！' : 'まずは C → A → T をなぞってみよう！');
+    $('chain-banner').hidden = true;
+    $('available-count').textContent = `見つけやすい単語 ${new Set(E.straightWords(board, easyWords).map(m => m.word)).size} 個`;
     render();
   }
   boardElement.addEventListener('pointerdown', event => {

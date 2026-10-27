@@ -11,6 +11,7 @@ const fs = require('node:fs');
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');
     await page.waitForSelector('.tile');
+    await page.locator('#chain-toggle').uncheck();
     return {context,page};
   }
   async function center(page,i){const b=await page.locator('.tile').nth(i).boundingBox();return {x:b.x+b.width/2,y:b.y+b.height/2};}
@@ -26,6 +27,13 @@ const fs = require('node:fs');
   assert.equal(await page.locator('.tile').count(),56);
   assert.equal(await page.locator('.tile.hint').count(),3);
   assert.equal(await page.locator('#tutorial').isVisible(),true);
+  // L字をマウスでなぞっても CAT にならず CA のまま。
+  const p16=await center(page,16),p17=await center(page,17),p24=await center(page,24);
+  await page.mouse.move(p16.x,p16.y);await page.mouse.down();
+  await page.mouse.move(p17.x,p17.y,{steps:5});await page.mouse.move(p24.x,p24.y,{steps:5});
+  assert.equal(await page.locator('#word-preview').textContent(),'CA');
+  await page.mouse.up();
+  assert.equal(await page.locator('#score').textContent(),'0');
   await drag(page,[16,17,16]); // 直前に戻すと C だけになり不正解。
   assert.equal(await page.locator('#score').textContent(),'0');
   assert.equal(await page.locator('.tile').nth(16).textContent(),'C');
@@ -58,6 +66,7 @@ const fs = require('node:fs');
   await page.waitForFunction(()=>document.getElementById('score').textContent==='30');
   // 別の新規ページで、縦の BOOK を実際になぞる。
   const vertical=await context.newPage(); await vertical.goto('http://127.0.0.1:8000');
+  await vertical.locator('#chain-toggle').uncheck();
   await drag(vertical,[0,7,14,21]);
   await vertical.waitForFunction(()=>document.getElementById('score').textContent==='40');
   assert.equal(await vertical.locator('#found-words .word-chip').textContent(),'BOOK');
@@ -100,6 +109,27 @@ const fs = require('node:fs');
   // 320px幅でも横スクロールしない。
   await mobile.page.setViewportSize({width:320,height:700});
   assert.equal(await mobile.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  // 別コンテキストで実際の連鎖・加点・操作ロック・終了を確認。
+  const chainContext=await browser.newContext({viewport:{width:1200,height:960}});
+  await chainContext.addInitScript(()=>{Math.random=()=>0;});
+  const chainPage=await chainContext.newPage();
+  chainPage.on('pageerror',e=>errors.push(e.message));
+  await chainPage.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');
+  await drag(chainPage,[16,17,18]);
+  await chainPage.locator('.chain-ready').first().waitFor();
+  assert.equal(await chainPage.locator('#restart-button').isDisabled(),true);
+  assert.equal(await chainPage.locator('#chain-toggle').isDisabled(),true);
+  assert.match(await chainPage.locator('#chain-banner').textContent(),/2 CHAIN/);
+  await chainPage.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');
+  const chips=await chainPage.locator('.word-chip').allTextContents();
+  assert.ok(chips.length>=2 && chips.length<=4);
+  const expected=chips.reduce((sum,text)=>{const [word,multiplier]=text.split(' ×');return sum+word.length*10*(Number(multiplier)||1);},0);
+  assert.equal(Number(await chainPage.locator('#score').textContent()),expected);
+  assert.equal(await chainPage.locator('#restart-button').isEnabled(),true);
+  assert.equal(await chainPage.locator('.tile').count(),56);
+  assert.ok(await chainPage.evaluate(()=>WordPopEngine.straightWords(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopEasyWords).length)>0);
+  await chainPage.screenshot({path:'/workspace/scratch/word-pop/chains.png',fullPage:true});
+  await chainContext.close();
   // ダウンロードして直接開く使い方でも追加語彙が読める。
   const local = await context.newPage();
   local.on('pageerror',e=>errors.push(e.message));

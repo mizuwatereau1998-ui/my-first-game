@@ -12,7 +12,7 @@
 ## ファイル
 
 - `vocabulary.js`：生成した3,000語の正解リスト。日本語訳は含めません。
-- `words.js`：既存の日本語訳付き基本語。正解リストに統合し、4文字以下を `WordPopEasyWords` として別に保持します。やさしい盤面・ヒントの調整に使うための区分です。今回、補充アルゴリズム自体は変更していません。
+- `words.js`：既存の日本語訳付き基本語。正解リストに統合し、4文字以下を `WordPopEasyWords` として別に保持します。やさしい盤面・ヒントの調整に使うための区分です。現在はこのやさしい語群を、補充候補の比較・一直線の自動連鎖に使っています（[GAMEPLAY.md](GAMEPLAY.md)）。
 - `data/vocabulary-exclusions.json`：変化形や今回採用しない語の明示的な除外一覧。
 - `data/vocabulary-report.json`：語数・文字数内訳・元データのハッシュ。
 - `scripts/build-vocabulary.py`：再生成用スクリプト。
