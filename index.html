@@ -20,7 +20,7 @@
         <div class="game-top"><span class="mode-label"><span>✦</span> のんびりモード</span><label class="chain-option"><input id="chain-toggle" type="checkbox" checked> 自動連鎖</label></div>
         <div class="word-tray"><span id="word-preview" class="word-preview">文字をつなげよう</span><span id="word-length">0 letters</span></div>
         <div id="chain-banner" class="chain-banner" role="status" hidden></div>
-        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div></div>
+        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div><div id="discovery-pop" class="discovery-pop" aria-hidden="true" hidden><div class="discovery-burst"><span id="discovery-label" class="discovery-label"></span><strong id="discovery-word" class="discovery-word" lang="en"></strong><span id="discovery-meaning" class="discovery-meaning"></span><span id="discovery-score" class="discovery-score"></span></div></div></div>
         <p id="idle-hint-note" class="idle-hint-note" role="status" hidden>光っている文字を、番号順にまっすぐなぞってみよう。</p>
         <p id="available-count" class="available-count"></p>
         <div class="feedback-row"><span id="feedback" role="status" aria-live="polite">まずは C → A → T をなぞってみよう！</span></div>

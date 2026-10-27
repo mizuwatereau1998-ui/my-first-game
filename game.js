@@ -50,6 +50,26 @@
     meaning.textContent = globalThis.WordPopDictionary[word] || '日本語の意味は準備中です';
     $('word-note').replaceChildren(heading, meaning);
   }
+  let discoveryTimer = null;
+  function hideDiscovery() {
+    clearTimeout(discoveryTimer);
+    discoveryTimer = null;
+    $('discovery-pop').hidden = true;
+    $('discovery-pop').classList.remove('show');
+  }
+  function showDiscovery(word, chain, earned) {
+    hideDiscovery();
+    $('discovery-word').textContent = word;
+    $('discovery-meaning').textContent = globalThis.WordPopDictionary[word] || '意味は準備中';
+    $('discovery-label').textContent = chain > 1 ? `${chain} CHAIN!` : 'NICE FIND!';
+    $('discovery-score').textContent = `+${earned} pt`;
+    $('discovery-pop').classList.toggle('is-chain', chain > 1);
+    $('discovery-pop').hidden = false;
+    // 連鎖で同じ単語が続いたときも、出現アニメーションを最初から再生。
+    void $('discovery-pop').offsetWidth;
+    $('discovery-pop').classList.add('show');
+    discoveryTimer = setTimeout(hideDiscovery, 1400);
+  }
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   function message(text, error = false) {
     $('feedback').textContent = text;
@@ -102,6 +122,7 @@
   function select(index) {
     if (busy) return;
     clearIdleHint();
+    hideDiscovery();
     path = E.extendPath(path, index);
     updateSelection();
   }
@@ -168,6 +189,7 @@
         }
         match.path.forEach(index => tiles.children[index].classList.add('popping'));
         await delay(240);
+        showDiscovery(match.word, chain, earned);
         const before = [...board];
         const result = E.collapse(board, match.path);
         board = result.board;
@@ -211,6 +233,7 @@
   function start() {
     if (busy) return;
     clearIdleHint();
+    hideDiscovery();
     releasePointer();
     board = E.createBoard();
     path = []; score = 0; found = [];
