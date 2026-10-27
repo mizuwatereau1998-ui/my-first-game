@@ -2,6 +2,7 @@
   'use strict';
   const E = globalThis.WordPopEngine, dictionary = globalThis.WordPopWords;
   const $ = id => document.getElementById(id);
+  $('vocabulary-count').textContent = dictionary.size.toLocaleString('ja-JP');
   const boardElement = $('board'), tiles = $('tiles');
   const tutorialPath = [16, 17, 18];
   const storageKey = 'word-pop-tutorial-complete-v1';

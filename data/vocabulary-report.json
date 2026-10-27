@@ -1,0 +1,13 @@
+{
+  "count": 3000,
+  "lengths": {
+    "3": 329,
+    "4": 851,
+    "5": 932,
+    "6": 888
+  },
+  "wordnet_sha256": "cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59",
+  "wordfreq": "3.1.1",
+  "frequency_floor": 3.5,
+  "note": "Frequency is not an entrance-exam or CEFR difficulty rating."
+}

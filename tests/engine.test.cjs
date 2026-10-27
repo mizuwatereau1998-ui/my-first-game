@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+require('../vocabulary.js');
 require('../words.js');
 require('../engine.js');
 const E = globalThis.WordPopEngine, words = globalThis.WordPopWords;

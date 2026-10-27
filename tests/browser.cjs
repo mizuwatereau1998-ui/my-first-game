@@ -20,6 +20,9 @@ const fs = require('node:fs');
     await page.mouse.up();
   }
   const {context,page}=await setup({viewport:{width:1200,height:960}});
+  assert.equal(await page.evaluate(()=>WordPopWords.size),3000);
+  assert.equal(await page.evaluate(()=>WordPopWords.has('AFFORD')),true);
+  assert.equal(await page.evaluate(()=>WordPopWords.has('WENT')),false);
   assert.equal(await page.locator('.tile').count(),56);
   assert.equal(await page.locator('.tile.hint').count(),3);
   assert.equal(await page.locator('#tutorial').isVisible(),true);
@@ -97,6 +100,22 @@ const fs = require('node:fs');
   // 320px幅でも横スクロールしない。
   await mobile.page.setViewportSize({width:320,height:700});
   assert.equal(await mobile.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  // ダウンロードして直接開く使い方でも追加語彙が読める。
+  const local = await context.newPage();
+  local.on('pageerror',e=>errors.push(e.message));
+  let fileLoaded = false;
+  try {
+    await local.goto(require('node:url').pathToFileURL(require('node:path').resolve(__dirname,'../index.html')).href);
+    fileLoaded = true;
+  } catch (error) {
+    if (!error.message.includes('ERR_BLOCKED_BY_ADMINISTRATOR')) throw error;
+    console.log('SKIP: file:// direct-open check blocked by cloud browser policy (HTTP checks still required)');
+  }
+  if (fileLoaded) {
+    assert.equal(await local.evaluate(()=>WordPopWords.size),3000);
+    assert.equal(await local.locator('.tile').count(),56);
+  }
+  await local.close();
   assert.deepEqual(errors,[]);
   await browser.close();
   console.log('PASS: desktop mouse / mobile touch / backtracking / gravity / refill / vertical and diagonal words / keyboard / reset / tutorial persistence / cancel / responsive / no page errors');

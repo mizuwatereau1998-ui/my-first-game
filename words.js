@@ -1,4 +1,4 @@
-// 初版の単語帳。3〜6文字の大文字をキーに、日本語の意味を登録します。
+// 日本語訳を確認済みの基本語。3〜6文字の大文字をキーに、日本語の意味を登録します。
 // 学習画面・発音・コレクションは次の開発段階で、このデータを利用します。
 globalThis.WordPopDictionary = {
   ANT:'アリ', AIR:'空気', ARM:'腕', ART:'芸術', ASK:'尋ねる',
@@ -18,4 +18,10 @@ globalThis.WordPopDictionary = {
   APPLE:'リンゴ', BEACH:'浜辺', BREAD:'パン', CHAIR:'椅子', CLOUD:'雲', DANCE:'踊る', DREAM:'夢', DRINK:'飲む', EARTH:'地球', ENJOY:'楽しむ', FRUIT:'果物', GRAPE:'ブドウ', GRASS:'草', GREEN:'緑', HAPPY:'幸せな', HEART:'心', HELLO:'こんにちは', HONEY:'蜂蜜', HORSE:'馬', HOUSE:'家', JUICE:'ジュース', LEMON:'レモン', LIGHT:'光', LUCKY:'幸運な', LUNCH:'昼食', MAGIC:'魔法', MANGO:'マンゴー', MELON:'メロン', MOUSE:'ネズミ', MUSIC:'音楽', NIGHT:'夜', OCEAN:'大洋', PANDA:'パンダ', PAPER:'紙', PEACH:'桃', PIANO:'ピアノ', PIZZA:'ピザ', PLANT:'植物', RIVER:'川', ROBOT:'ロボット', SHEEP:'羊', SLEEP:'眠る', SMALL:'小さい', SMILE:'笑顔', SNAKE:'ヘビ', SPACE:'宇宙', SPOON:'スプーン', STONE:'石', STORY:'物語', SUGAR:'砂糖', SUNNY:'晴れた', SWEET:'甘い', TABLE:'テーブル', THREE:'三', TIGER:'トラ', TODAY:'今日', TRAIN:'列車', WATER:'水', WHITE:'白い', WORLD:'世界', ZEBRA:'シマウマ',
   BANANA:'バナナ', ORANGE:'オレンジ', PURPLE:'紫', YELLOW:'黄色', SCHOOL:'学校', FRIEND:'友だち', LITTLE:'小さい', PUZZLE:'パズル', SUMMER:'夏', WINTER:'冬', SPRING:'春', AUTUMN:'秋', FAMILY:'家族', PLANET:'惑星', RABBIT:'ウサギ', TURTLE:'カメ', MONKEY:'サル', GARDEN:'庭', WINDOW:'窓', LETTER:'文字', CHERRY:'サクランボ', TOMATO:'トマト', POTATO:'ジャガイモ', COOKIE:'クッキー', CHEESE:'チーズ', FOREST:'森', KITTEN:'子猫', MOTHER:'母', FATHER:'父', NATURE:'自然', NUMBER:'数', PENCIL:'鉛筆', PICNIC:'ピクニック', PLAYER:'プレイヤー', POCKET:'ポケット', PRETTY:'かわいい', SILVER:'銀', SIMPLE:'簡単な', SISTER:'姉妹', SOCCER:'サッカー', SPIDER:'クモ', STRONG:'強い', TRAVEL:'旅行する', TWELVE:'十二', WONDER:'驚き'
 };
-globalThis.WordPopWords = new Set(Object.keys(globalThis.WordPopDictionary));
+// 訳がない追加語も正解として認めます。推測の訳を作らないため、データは分離。
+globalThis.WordPopWords = new Set([
+  ...globalThis.WordPopVocabulary,
+  ...Object.keys(globalThis.WordPopDictionary)
+]);
+// 盤面づくり・今後のヒント用のやさしい語。正解用の広い語彙とは分離します。
+globalThis.WordPopEasyWords = new Set(Object.keys(globalThis.WordPopDictionary).filter(word => word.length <= 4));
