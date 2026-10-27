@@ -18,6 +18,7 @@ test('規則・不規則の複数形、時制・分詞、比較級を認めな�
 test('語尾が似ていても基本形なら認める。意味のない訳を捏造しない', () => {
   for(const word of ['BUS','GAS','GLASS','GRASS','CLASS','DRESS','SPRING','KING','RED','SEED','ROSE']) assert.ok(words.has(word),word);
   assert.equal(globalThis.WordPopDictionary.ROSE,'バラ');
-  assert.equal(globalThis.WordPopDictionary.AFFORD,undefined);
+  assert.equal(globalThis.WordPopDictionary.AFFORD,'〜する余裕がある');
+  assert.equal(globalThis.WordPopDictionary.ATLAS,undefined);
   assert.ok([...globalThis.WordPopEasyWords].every(w=>words.has(w)&&w.length<=4));
 });

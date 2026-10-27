@@ -10,6 +10,46 @@
   let board, path = [], score = 0, found = [], busy = false, pointerId = null, lastPoint = null;
   let tutorialComplete = false;
   try { tutorialComplete = localStorage.getItem(storageKey) === 'true'; } catch { /* 保存不可でも遊べます。 */ }
+  const IDLE_HINT_MS = 15000;
+  let hintTimer = null;
+  function clearIdleHint() {
+    clearTimeout(hintTimer);
+    hintTimer = null;
+    for (const tile of tiles.children) {
+      tile.classList.remove('idle-hint');
+      tile.removeAttribute('data-hint-step');
+      tile.style.removeProperty('--hint-order');
+    }
+    $('idle-hint-note').hidden = true;
+  }
+  function scheduleIdleHint() {
+    clearIdleHint();
+    if (busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open) return;
+    hintTimer = setTimeout(() => {
+      hintTimer = null;
+      if (busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open) return;
+      const answer = !tutorialComplete ? tutorialPath :
+        (E.findWord(board, easyWords) || E.findWord(board, dictionary));
+      if (!answer) return;
+      answer.forEach((index, order) => {
+        const tile = tiles.children[index];
+        tile.classList.add('idle-hint');
+        tile.dataset.hintStep = order + 1;
+        tile.style.setProperty('--hint-order', order);
+      });
+      $('idle-hint-note').hidden = false;
+    }, IDLE_HINT_MS);
+  }
+  function showMeaning(word) {
+    const heading = document.createElement('strong');
+    heading.className = 'meaning-word';
+    heading.lang = 'en';
+    heading.textContent = word;
+    const meaning = document.createElement('p');
+    meaning.className = 'meaning-text';
+    meaning.textContent = globalThis.WordPopDictionary[word] || '日本語の意味は準備中です';
+    $('word-note').replaceChildren(heading, meaning);
+  }
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   function message(text, error = false) {
     $('feedback').textContent = text;
@@ -61,6 +101,7 @@
   }
   function select(index) {
     if (busy) return;
+    clearIdleHint();
     path = E.extendPath(path, index);
     updateSelection();
   }
@@ -88,11 +129,13 @@
   }
   async function submit() {
     if (busy || !path.length) return;
+    clearIdleHint();
     const selected = [...path], word = selected.map(index => board[index]).join('');
     if (!E.isWord(word, dictionary)) {
       message(word.length < 3 ? '3〜6文字の単語をつくってみよう。' : `${word} は単語帳に未登録。別のことばを探そう！`, true);
       path = [];
       updateSelection();
+      scheduleIdleHint();
       return;
     }
     busy = true;
@@ -113,6 +156,7 @@
     try {
       while (match) {
         const earned = match.word.length * 10 * chain;
+        showMeaning(match.word);
         if (chain > 1) {
           $('chain-banner').hidden = false;
           $('chain-banner').textContent = `${chain} CHAIN!  ${match.word}  +${earned} pt`;
@@ -134,7 +178,10 @@
         found.push(match.word);
         $('score').textContent = score;
         $('found-count').textContent = found.length;
-        const chip = document.createElement('span');
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.dataset.word = match.word;
+        chip.setAttribute('aria-label', `${match.word} の意味を確認`);
         chip.className = 'word-chip';
         chip.textContent = chain > 1 ? `${match.word} ×${chain}` : match.word;
         if (found.length === 1) $('found-words').replaceChildren();
@@ -157,11 +204,13 @@
       $('chain-toggle').disabled = false;
       boardElement.setAttribute('aria-busy', 'false');
       [...tiles.children].forEach(tile => tile.classList.remove('falling', 'chain-ready'));
+      scheduleIdleHint();
     }
   }
 
   function start() {
     if (busy) return;
+    clearIdleHint();
     releasePointer();
     board = E.createBoard();
     path = []; score = 0; found = [];
@@ -171,15 +220,21 @@
     empty.className = 'empty-state';
     empty.textContent = 'まだ見つかっていない、小さなことばが待っているよ。';
     $('found-words').replaceChildren(empty);
+    const note = document.createElement('p');
+    note.className = 'meaning-empty';
+    note.textContent = '見つけた単語の意味が、ここに表示されるよ。';
+    $('word-note').replaceChildren(note);
     $('tutorial').hidden = tutorialComplete;
     message(tutorialComplete ? '3〜6文字の英単語を探してみよう！' : 'まずは C → A → T をなぞってみよう！');
     $('chain-banner').hidden = true;
     $('available-count').textContent = `見つけやすい単語 ${new Set(E.straightWords(board, easyWords).map(m => m.word)).size} 個`;
     render();
+    scheduleIdleHint();
   }
   boardElement.addEventListener('pointerdown', event => {
     if (busy || pointerId !== null || !event.isPrimary || event.button !== 0 || indexAt(event.clientX, event.clientY) === null) return;
     event.preventDefault();
+    clearIdleHint();
     path = [];
     pointerId = event.pointerId;
     boardElement.setPointerCapture(pointerId);
@@ -198,14 +253,15 @@
   });
   function cancel() {
     if (busy) return;
-    releasePointer(); path = []; updateSelection();
+    releasePointer(); path = []; updateSelection(); scheduleIdleHint();
   }
   boardElement.addEventListener('pointercancel', cancel);
   boardElement.addEventListener('lostpointercapture', () => { if (pointerId !== null) cancel(); });
-  window.addEventListener('blur', cancel);
+  window.addEventListener('blur', () => { cancel(); clearIdleHint(); });
   boardElement.addEventListener('keydown', event => {
     const tile = event.target.closest('.tile');
     if (!tile || busy) return;
+    scheduleIdleHint();
     const index = Number(tile.dataset.index);
     const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
     if (offset) {
@@ -222,8 +278,18 @@
   $('restart-button').addEventListener('click', () => {
     if (!busy && (!found.length || confirm('スコアと今回の履歴をリセットして、新しくはじめますか？'))) start();
   });
-  $('help-button').addEventListener('click', () => { cancel(); $('help-dialog').showModal(); });
-  $('close-help').addEventListener('click', () => $('help-dialog').close());
+  $('help-button').addEventListener('click', () => { cancel(); $('help-dialog').showModal(); clearIdleHint(); });
+  $('close-help').addEventListener('click', () => { $('help-dialog').close(); scheduleIdleHint(); });
+  $('help-dialog').addEventListener('close', scheduleIdleHint);
+  document.addEventListener('visibilitychange', scheduleIdleHint);
+  window.addEventListener('focus', scheduleIdleHint);
+  $('found-words').addEventListener('click', event => {
+    const chip = event.target.closest('[data-word]');
+    if (!chip) return;
+    showMeaning(chip.dataset.word);
+    scheduleIdleHint();
+  });
+  $('chain-toggle').addEventListener('change', scheduleIdleHint);
   new ResizeObserver(drawPath).observe(boardElement);
   start();
 })();

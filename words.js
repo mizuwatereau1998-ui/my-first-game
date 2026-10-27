@@ -1,6 +1,7 @@
 // 日本語訳を確認済みの基本語。3〜6文字の大文字をキーに、日本語の意味を登録します。
-// 学習画面・発音・コレクションは次の開発段階で、このデータを利用します。
+// 正解時の意味表示に使用。発音・保存付きコレクションは今後追加します。
 globalThis.WordPopDictionary = {
+  ACCEPT:'受け入れる', AFFORD:'〜する余裕がある', AFFECT:'影響を与える', EFFECT:'効果・影響', EFFORT:'努力', DEGREE:'程度・度', DECIDE:'決める', CREATE:'創造する・作り出す', NOTICE:'気づく・通知', REASON:'理由', RESULT:'結果', ENOUGH:'十分な', RATHER:'むしろ', UNLESS:'〜しない限り', THOUGH:'〜だけれども', WITHIN:'〜以内に', BEYOND:'〜を越えて', EXCEPT:'〜を除いて', PUBLIC:'公共の', COMMON:'共通の・よくある', SOCIAL:'社会の', HEALTH:'健康', ENERGY:'エネルギー・活力', FUTURE:'未来', MEMORY:'記憶', ADVICE:'助言', CHANCE:'機会', CHOICE:'選択', DESIRE:'強く望む・願望', DEMAND:'要求する・需要', REFUSE:'断る', REDUCE:'減らす', ALLOW:'許す', AGREE:'同意する', AVOID:'避ける', CAUSE:'原因・引き起こす', CLAIM:'主張する', DOUBT:'疑う・疑い', VALUE:'価値', SOLVE:'解く・解決する', EXIST:'存在する', PROVE:'証明する', SHARE:'分け合う', REACH:'到着する・届く', GUESS:'推測する', LEAVE:'去る・残す', BRING:'持ってくる', BUILD:'建てる', SPEND:'費やす', TEACH:'教える', THINK:'考える',
   ANT:'アリ', AIR:'空気', ARM:'腕', ART:'芸術', ASK:'尋ねる',
   BAG:'かばん', BAT:'コウモリ', BED:'ベッド', BEE:'ハチ', BIG:'大きい', BOX:'箱', BOY:'男の子', BUS:'バス',
   CAR:'車', CAT:'猫', COW:'牛', CUP:'カップ', CUT:'切る', CAN:'できる', CAP:'帽子',
