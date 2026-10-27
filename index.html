@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6ef">
+  <title>Word Pop! — なぞって、見つけて、はじけよう。</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="words.js"></script>
+  <script defer src="engine.js"></script>
+  <script defer src="game.js"></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="./" aria-label="Word Pop! ホーム"><span class="brand-icon">w<span>✦</span></span>Word Pop<span class="orange">!</span></a><span class="header-note">ひと休みに、ことばあそび。</span><button id="help-button" class="icon-button" aria-label="遊び方を開く">?</button></header>
+  <main>
+    <section class="intro"><div class="eyebrow"><span></span> LITTLE WORDS, BIG DISCOVERIES</div><h1>つなげるたびに、<br class="mobile-break">ひらめきが<span class="accent">ポン！</span></h1><p>隣り合う文字をなぞって、英単語を見つけよう。</p></section>
+    <div class="game-layout">
+      <section class="game-panel" aria-label="英単語ゲーム">
+        <div class="game-top"><span class="mode-label"><span>✦</span> のんびりモード</span><span class="board-size">7 × 8</span></div>
+        <div class="word-tray"><span id="word-preview" class="word-preview">文字をつなげよう</span><span id="word-length">0 letters</span></div>
+        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div></div>
+        <div class="feedback-row"><span id="feedback" role="status" aria-live="polite">まずは C → A → T をなぞってみよう！</span></div>
+        <div class="game-bottom"><span>↗ 縦・横・ななめにつながるよ</span><button id="submit-button" class="text-button">決定 <span>↵</span></button></div>
+      </section>
+      <aside class="sidebar">
+        <section class="score-card"><div class="card-label">YOUR DISCOVERIES <span>✧</span></div><div class="score"><span id="score">0</span><span>pt</span></div><div class="score-divider"></div><div class="word-count"><span>見つけた単語</span><strong><span id="found-count">0</span> <small>words</small></strong></div></section>
+        <section id="tutorial" class="tip-card"><div class="tip-title"><span>✦</span> はじめの一歩</div><p>光っている <strong>C → A → T</strong> を<br>順番になぞって、指を離してね。</p><div class="sample-word"><span>C</span><i>→</i><span>A</span><i>→</i><span>T</span><b>ねこ</b></div></section>
+        <section class="found-card"><div class="card-heading"><h2>見つけたことば</h2><span>YOUR WORDS</span></div><div id="found-words" class="found-words"><p class="empty-state">まだ見つかっていない、<br>小さなことばが待っているよ。</p></div></section>
+        <button id="restart-button" class="restart-button"><span>↻</span> 新しくはじめる</button>
+      </aside>
+    </div>
+    <p class="footer-note">急がなくて、大丈夫。あなたのペースで見つけよう。<span>✦</span></p>
+  </main>
+  <dialog id="help-dialog"><button id="close-help" class="icon-button close" aria-label="遊び方を閉じる">×</button><span class="eyebrow">HOW TO PLAY</span><h2>なぞって、ことばを発見。</h2><ol><li>隣り合う文字を、縦・横・斜めにつなげます。</li><li>3〜6文字の英単語を作り、指やマウスを離すと決定。</li><li>登録単語なら文字が消えて、上から新しい文字が落ちてきます。</li></ol><p>同じマスは1回の単語で1度だけ。直前の文字に戻ると1文字取り消せます。1文字につき10点、同じ単語も再び見つけられます。</p><p>初版は小さな単語帳を使用しています。すべての英単語に対応しているわけではありません。時間制限はありません。</p><p class="keyboard-help">キーボード：矢印で移動／スペースで選択／Enterで決定／Escで取り消し。</p></dialog>
+</body>
+</html>
