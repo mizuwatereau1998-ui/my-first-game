@@ -125,7 +125,7 @@
         match.path.forEach(index => tiles.children[index].classList.add('popping'));
         await delay(240);
         const before = [...board];
-        const result = E.friendlyRefill(E.collapse(board, match.path), easyWords);
+        const result = E.collapse(board, match.path);
         board = result.board;
         path = [];
         render(result.distances);
@@ -141,7 +141,7 @@
         $('found-words').prepend(chip);
         while ($('found-words').children.length > 30) $('found-words').lastElementChild.remove();
         match = chainEnabled && chain <= E.MAX_CASCADES
-          ? E.findCascade(before, board, result.distances, easyWords) : null;
+          ? E.findCascade(before, result, easyWords) : null;
         if (match) chain++;
       }
       // 3,000語のどれかではなく、身近な短い語を最低1つ残します。

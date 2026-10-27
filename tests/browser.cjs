@@ -114,12 +114,22 @@ const fs = require('node:fs');
   await chainContext.addInitScript(()=>{Math.random=()=>0;});
   const chainPage=await chainContext.newPage();
   chainPage.on('pageerror',e=>errors.push(e.message));
+  // 実際の消去・落下によって中央にCATが成立する固定盤面。
+  await chainPage.route('**/engine.js', route=>route.fulfill({
+    contentType:'application/javascript',
+    body:fs.readFileSync(require('node:path').resolve(__dirname,'../engine.js'),'utf8') + `
+      WordPopEngine.createBoard=()=>{
+        const b=Array(56).fill('Z');b[16]='C';b[24]='A';b[25]='T';b.splice(21,3,'D','O','G');return b;
+      };`
+  }));
   await chainPage.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');
-  await drag(chainPage,[16,17,18]);
+  await drag(chainPage,[21,22,23]);
   await chainPage.locator('.chain-ready').first().waitFor();
   assert.equal(await chainPage.locator('#restart-button').isDisabled(),true);
   assert.equal(await chainPage.locator('#chain-toggle').isDisabled(),true);
-  assert.match(await chainPage.locator('#chain-banner').textContent(),/2 CHAIN/);
+  assert.match(await chainPage.locator('#chain-banner').textContent(),/2 CHAIN!  CAT/);
+  const highlighted=await chainPage.locator('.chain-ready').evaluateAll(tiles=>tiles.map(t=>Number(t.dataset.index)));
+  assert.deepEqual(highlighted,[23,24,25]);
   await chainPage.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');
   const chips=await chainPage.locator('.word-chip').allTextContents();
   assert.ok(chips.length>=2 && chips.length<=4);

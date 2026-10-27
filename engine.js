@@ -95,38 +95,22 @@
     return matches;
   }
   const matchKey = match => `${match.word}:${match.path.join(',')}`;
-  // 補充される新しいマスだけを調整。生き残った文字は書き換えません。
-  function friendlyRefill(result, easyWords, random = Math.random) {
-    const fresh = new Set(result.fresh);
-    const options = [];
-    const byLength = new Map([3,4].map(n => [n, [...easyWords].filter(w => w.length === n)]));
-    for (const path of shortPaths) {
-      if (!path.some(index => fresh.has(index))) continue;
-      for (const word of byLength.get(path.length)) {
-        if (path.every((index,n) => fresh.has(index) || result.board[index] === word[n])) {
-          options.push({word, path});
-        }
-      }
-    }
-    let best = [...result.board];
-    const quality = board => new Set(straightWords(board, easyWords).map(m => m.word)).size;
-    let bestScore = quality(best);
-    // 有限回の候補比較。候補がなくても通常の重み付き補充で終了します。
-    for (let trial = 0; trial < Math.min(40, options.length); trial++) {
-      const option = options[Math.floor(random() * options.length)];
-      const candidate = [...result.board];
-      option.path.forEach((index,n) => { if (fresh.has(index)) candidate[index] = option.word[n]; });
-      const score = quality(candidate);
-      if (score > bestScore || (score === bestScore && random() < 0.25)) {
-        best = candidate; bestScore = score;
-      }
-    }
-    return {...result, board: best};
-  }
-  function findCascade(before, after, distances, easyWords) {
+  function findCascade(before, result, easyWords) {
     const previous = new Set(straightWords(before, easyWords).map(matchKey));
-    return straightWords(after, easyWords).find(match =>
-      !previous.has(matchKey(match)) && match.path.some(index => distances[index] > 0)) || null;
+    const fresh = new Set(result.fresh);
+    const candidates = straightWords(result.board, easyWords).filter(match => {
+      if (previous.has(matchKey(match))) return false;
+      const shifts = match.path.map(index => result.distances[index]);
+      // 偶然の補充でそろった単語も連鎖可。既存単語全体の平行移動だけは除外。
+      return shifts.some(distance => distance > 0) &&
+        (match.path.some(index => fresh.has(index)) || new Set(shifts).size > 1);
+    });
+    // 複数同時にできたら、盤面中央に近い経路を優先する。
+    const centrality = match => match.path.reduce((sum, index) =>
+      sum + Math.abs(Math.floor(index / COLS) - (ROWS - 1) / 2) +
+      Math.abs(index % COLS - (COLS - 1) / 2), 0) / match.path.length;
+    return candidates.sort((a,b) => centrality(a) - centrality(b))[0] || null;
   }
-  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, friendlyRefill, findCascade, MAX_CASCADES };
+
+  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, findCascade, MAX_CASCADES };
 })();
