@@ -118,6 +118,10 @@
     drawPath();
   }
   function render(distances = []) {
+    // 選択時の拡大に影響されない実寸。端末ごとの小数ピクセルも保つ。
+    const rowPitch = tiles.firstElementChild
+      ? parseFloat(getComputedStyle(tiles.firstElementChild).height) + parseFloat(getComputedStyle(tiles).rowGap) : 0;
+    const colors = [...tiles.children].map(tile => tile.dataset.color);
     tiles.replaceChildren();
     board.forEach((letter, index) => {
       const tile = document.createElement('button');
@@ -125,8 +129,10 @@
       tile.className = `tile${'AEIOU'.includes(letter) ? ' vowel' : ''}`;
       tile.textContent = letter;
       tile.dataset.index = index;
-      // 見た目だけの色分け。文字と位置から決め、ゲーム用の乱数列には影響させない。
-      tile.dataset.color = (letter.charCodeAt(0) + index * 3) % 7;
+      // 新しい文字は文字と位置で色分け。落下中は元の色を保ち、ゲーム用の乱数は使わない。
+      const source = index - (distances[index] || 0) * E.COLS;
+      tile.dataset.color = distances.length && source >= 0 ? colors[source]
+        : (letter.charCodeAt(0) + index * 3) % 7;
       tile.setAttribute('aria-label', `${Math.floor(index / E.COLS) + 1}行${index % E.COLS + 1}列 ${letter}`);
       tile.tabIndex = index === 0 ? 0 : -1;
       if (!tutorialComplete && tutorialPath.includes(index)) {
@@ -135,7 +141,7 @@
       }
       if (distances[index]) {
         tile.classList.add('falling');
-        tile.style.setProperty('--fall-distance', distances[index]);
+        tile.style.setProperty('--fall-y', `${-distances[index] * rowPitch}px`);
       }
       tiles.append(tile);
     });
@@ -198,19 +204,29 @@
     let match = {word, path: selected}, chain = 1;
     try {
       while (match) {
-        globalThis.WordPopCharacter?.react(chain);
         const earned = match.word.length * 10 * chain;
         showMeaning(match.word);
         if (chain > 1) {
+          $('chain-banner').dataset.chain = chain;
           $('chain-banner').hidden = false;
+          // 同じ表示要素でも連鎖ごとに弾み直す。
+          $('chain-banner').classList.remove('chain-bounce');
+          void $('chain-banner').offsetWidth;
+          $('chain-banner').classList.add('chain-bounce');
           $('chain-banner').textContent = `${chain} CHAIN!`;
           match.path.forEach(index => tiles.children[index].classList.add('chain-ready'));
           message(`落下で ${match.word} がそろった！ ${chain}連鎖！`);
-          await delay(600);
+          await delay(300);
         } else {
           message(`${match.word}！ +${earned} pt`);
         }
-        match.path.forEach(index => tiles.children[index].classList.add('popping'));
+        globalThis.WordPopCharacter?.react(chain);
+        globalThis.WordPopMotion?.burst(match.path, chain);
+        match.path.forEach((index, order) => {
+          const tile = tiles.children[index];
+          tile.style.setProperty('--pop-delay', `${order * 12}ms`);
+          tile.classList.add('popping');
+        });
         await delay(240);
         showDiscovery(match.word, chain, earned);
         const before = [...board];
@@ -251,6 +267,7 @@
     if (busy) return;
     clearIdleHint();
     hideDiscovery();
+    globalThis.WordPopMotion?.clear();
     releasePointer();
     globalThis.WordPopCharacter?.reset();
     board = E.createBoard();

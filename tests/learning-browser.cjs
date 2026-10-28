@@ -28,7 +28,13 @@ const path=require('node:path');
  await page.clock.runFor(15000);assert.equal(await page.locator('.idle-hint').count(),3);
  await page.locator('#help-button').click();
  await page.clock.runFor(20000);assert.equal(await page.locator('.idle-hint').count(),0);
- await page.locator('#close-help').click();await page.clock.runFor(15100); // closeイベントの次フレームも含める。
+ // close はブラウザから非同期配送され、時計を進める呼び出しの後に届く場合がある。
+ // 最後のタイマー再設定を行う close イベントを受けてから15秒を検証する。
+ await page.evaluate(()=>{window.helpClosed=new Promise(resolve=>document.getElementById('help-dialog').addEventListener('close',()=>resolve(true),{once:true}));});
+ await page.locator('#close-help').click();await page.clock.runFor(100);
+ await page.evaluate(()=>helpClosed);
+ await page.clock.runFor(14999);assert.equal(await page.locator('.idle-hint').count(),0);
+ await page.clock.runFor(1);
  assert.equal(await page.locator('.idle-hint').count(),3);
  await page.emulateMedia({reducedMotion:'reduce'});
  assert.equal(await page.locator('.idle-hint').first().evaluate(t=>getComputedStyle(t).animationName),'none');

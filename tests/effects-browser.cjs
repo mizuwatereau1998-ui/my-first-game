@@ -31,7 +31,7 @@ const fs=require('node:fs'),path=require('node:path');
  assert.equal(await page.locator('#discovery-pop').isVisible(),false);
  assert.equal(await page.locator('.tile.selected').count(),1);await page.mouse.up();
  // 連鎖のたびに単語・訳・連鎖ラベルが切り替わり、最後は自動で消える。
- await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b[16]='C';b[24]='A';b[25]='T';b.splice(21,3,'D','O','G');return b;};`}));
+ await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\n// 偶然の追加連鎖で最終履歴が変わらないよう、補充文字だけをZに固定する。\nMath.random=()=>.99;WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b[16]='C';b[24]='A';b[25]='T';b.splice(21,3,'D','O','G');return b;};`}));
  await page.reload();
  await page.evaluate(()=>{window.popups=[];new MutationObserver(()=>popups.push([document.getElementById('discovery-word').textContent,document.getElementById('discovery-meaning').textContent,document.getElementById('discovery-label').textContent])).observe(document.getElementById('discovery-word'),{childList:true});});
  await enterWord(21,3);await page.clock.runFor(5000);
