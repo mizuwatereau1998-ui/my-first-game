@@ -105,14 +105,19 @@ const path = require('node:path');
       assert.equal(await page.locator('.character-space').getAttribute('data-pop-state'),chain===1?'correct':chain===2?'chain2':'chain3');
       assert.equal(await page.locator('.chain-halo').count(),chain>=3?1:0);
       assert.equal(await page.locator('.celebration-star').count(),chain===4?12:0);
+      assert.equal(await page.locator('#discovery-pop').isVisible(),false);
       await page.clock.runFor(240);
+      assert.equal(await page.locator('#discovery-pop').isVisible(),false);
+      await page.clock.runFor(380);
+      assert.equal(await page.locator('#discovery-pop').isVisible(),true);
       assert.equal(await page.locator('#discovery-label').textContent(),chain===1?'NICE FIND!':`${chain} CHAIN!`);
       if(chain===4) {
-        await page.locator('.tile-effects,.discovery-burst').evaluateAll(elements=>{for(const e of elements)for(const a of e.getAnimations({subtree:true})){a.pause();a.currentTime=350;}});
+        await page.locator('.discovery-burst').evaluate(e=>{for(const a of e.getAnimations({subtree:true})){a.pause();a.currentTime=550;}});
         await page.screenshot({path:'/workspace/scratch/word-pop/polished-chain4-mobile.png',fullPage:true});
       }
-      await page.clock.runFor(380);
       if(chain<4) {
+        await page.clock.runFor(1000);
+        assert.equal(await page.locator('#discovery-pop').isVisible(),false);
         assert.equal(await page.locator('#board').getAttribute('aria-busy'),'true');
         // 消去予告中に次の表情へ先走らず、弾け始めに切り替える。
         await page.clock.runFor(299);

@@ -20,7 +20,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  // ゲーム本体が連鎖ごとに呼ぶことも確認。表示テスト用に連鎖候補を固定する。
  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nlet calls=0;WordPopEngine.findCascade=(before,result,easy)=>{if(++calls>2)return null;const p=WordPopEngine.findWord(result.board,easy);return p?{path:p,word:p.map(i=>result.board[i]).join('')}:null;};`}));
  await page.reload();await page.evaluate(()=>{window.states=[];new MutationObserver(()=>states.push(document.querySelector('.character-space').dataset.popState)).observe(document.querySelector('.character-space'),{attributes:true,attributeFilter:['data-pop-state']});});
- for(const i of [16,17,18]){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}await page.keyboard.press('Enter');await page.clock.runFor(5000);
+ for(const i of [16,17,18]){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}await page.keyboard.press('Enter');await page.clock.runFor(5500);
  const states=await page.evaluate(()=>states);assert.deepEqual(states,['correct','chain2','chain3','idle']);
  // 画像が1枚もなくても仮表示・単語判定・得点は動く。
  await page.unroute('**/engine.js');await page.route('**/assets/characters/*.png',r=>r.fulfill({status:404,body:''}));await page.reload();await page.locator('#chain-toggle').uncheck();

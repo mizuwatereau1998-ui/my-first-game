@@ -70,6 +70,7 @@
     }
     showMeaning(inspectedWord);
   }
+  const REWARD_MS = 1000;
   let discoveryTimer = null;
   function hideDiscovery() {
     clearTimeout(discoveryTimer);
@@ -84,11 +85,12 @@
     $('discovery-label').textContent = chain > 1 ? `${chain} CHAIN!` : 'NICE FIND!';
     $('discovery-score').textContent = `+${earned} pt`;
     $('discovery-pop').classList.toggle('is-chain', chain > 1);
+    $('discovery-pop').dataset.chain = chain;
     $('discovery-pop').hidden = false;
     // 連鎖で同じ単語が続いたときも、出現アニメーションを最初から再生。
     void $('discovery-pop').offsetWidth;
     $('discovery-pop').classList.add('show');
-    discoveryTimer = setTimeout(hideDiscovery, 1400);
+    discoveryTimer = setTimeout(hideDiscovery, REWARD_MS);
   }
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
   function message(text, error = false) {
@@ -228,21 +230,27 @@
           tile.classList.add('popping');
         });
         await delay(240);
-        showDiscovery(match.word, chain, earned);
         const before = [...board];
         const result = E.refillLongWords(E.collapse(board, match.path), longWords);
         board = result.board;
         path = [];
         render(result.distances);
         await delay(380);
+        [...tiles.children].forEach(tile => tile.classList.remove('falling'));
         score += earned;
         found.push(match.word);
         $('score').textContent = score;
         $('found-count').textContent = found.length;
         renderRecentWords();
+        showDiscovery(match.word, chain, earned);
         match = chainEnabled && chain <= E.MAX_CASCADES
           ? E.findCascade(before, result, easyWords) : null;
-        if (match) chain++;
+        if (match) {
+          // 1語のリワードを読み終えてから次の連鎖へ。消去・落下に重ねない。
+          await delay(REWARD_MS);
+          hideDiscovery();
+          chain++;
+        }
       }
       // 3,000語のどれかではなく、身近な短い語を最低1つ残します。
       const rescued = E.ensurePlayable(board, easyWords);
