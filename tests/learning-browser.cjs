@@ -41,13 +41,14 @@ const path=require('node:path');
   await page.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');
  }
  await keyboardWord(16,3);
- assert.equal(await page.locator('.meaning-word').textContent(),'CAT');
- assert.equal(await page.locator('.meaning-text').textContent(),'猫');
+ assert.equal(await page.locator('.chip-word').first().textContent(),'CAT');
+ assert.equal(await page.locator('.chip-meaning').first().textContent(),'猫');
  await keyboardWord(35,3);
- assert.equal(await page.locator('.meaning-text').textContent(),'犬');
+ assert.equal(await page.locator('.chip-meaning').first().textContent(),'犬');
  const score=await page.locator('#score').textContent();
  await page.locator('[data-word="CAT"]').click();
- assert.equal(await page.locator('.meaning-text').textContent(),'猫');
+ assert.equal(await page.locator('[data-word=CAT] .chip-meaning').textContent(),'猫');
+ assert.equal(await page.locator('[data-word=CAT]').getAttribute('aria-pressed'),'true');
  assert.equal(await page.locator('#score').textContent(),score);
  await page.clock.runFor(15000);
  // 補充後の現在の盤面で、本当に登録単語を指しているか確認。
@@ -59,15 +60,15 @@ const path=require('node:path');
  }),true);
  page.once('dialog',d=>d.accept());await page.locator('#restart-button').click();
  assert.equal(await page.locator('.idle-hint').count(),0);
- assert.equal(await page.locator('.meaning-word').count(),0);
+ assert.equal(await page.locator('.word-chip').count(),0);
  assert.equal(await page.locator('#score').textContent(),'0');
  // 意味未整備でも登録語は正解。訳を捏造せず準備中を表示。
  await page.route('**/engine.js',route=>route.fulfill({contentType:'application/javascript',body:
   fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,5,...'ATLAS');return b;};`}));
  await page.reload();await page.locator('#chain-toggle').uncheck();
  await keyboardWord(16,5);
- assert.equal(await page.locator('.meaning-word').textContent(),'ATLAS');
- assert.equal(await page.locator('.meaning-text').textContent(),'日本語の意味は準備中です');
+ assert.equal(await page.locator('.chip-word').first().textContent(),'ATLAS');
+ assert.equal(await page.locator('.chip-meaning').first().textContent(),'意味は準備中');
  assert.equal(await page.locator('#score').textContent(),'50');
  await page.screenshot({path:'/workspace/scratch/word-pop/meaning.png',fullPage:true});
  assert.deepEqual(errors,[]);

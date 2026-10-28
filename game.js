@@ -45,15 +45,30 @@
       $('idle-hint-note').hidden = false;
     }, IDLE_HINT_MS);
   }
+  let inspectedWord = null;
   function showMeaning(word) {
-    const heading = document.createElement('strong');
-    heading.className = 'meaning-word';
-    heading.lang = 'en';
-    heading.textContent = word;
-    const meaning = document.createElement('p');
-    meaning.className = 'meaning-text';
-    meaning.textContent = globalThis.WordPopDictionary[word] || '日本語の意味は準備中です';
-    $('word-note').replaceChildren(heading, meaning);
+    inspectedWord = word;
+    for (const card of $('found-words').querySelectorAll('[data-word]')) {
+      card.setAttribute('aria-pressed', String(card.dataset.word === word));
+    }
+  }
+  function renderRecentWords() {
+    const counts = new Map();
+    for (const word of found) counts.set(word, (counts.get(word) || 0) + 1);
+    const recent = [...new Set([...found].reverse())].slice(0, 3);
+    $('found-words').replaceChildren();
+    for (const word of recent) {
+      const card = document.createElement('button');
+      card.type = 'button'; card.className = 'word-chip'; card.dataset.word = word;
+      card.setAttribute('aria-label', `${word}、${globalThis.WordPopDictionary[word] || '意味は準備中'}、発見${counts.get(word)}回`);
+      for (const [className, text] of [['chip-word',word],['chip-meaning',globalThis.WordPopDictionary[word] || '意味は準備中'],['chip-count',`発見 ${counts.get(word)}回`]]) {
+        const span = document.createElement('span');span.className = className;span.textContent = text;
+        if (className === 'chip-word') span.lang = 'en';
+        card.append(span);
+      }
+      $('found-words').append(card);
+    }
+    showMeaning(inspectedWord);
   }
   let discoveryTimer = null;
   function hideDiscovery() {
@@ -99,7 +114,7 @@
     const word = path.map(index => board[index]).join('');
     $('word-preview').textContent = word || '文字をつなげよう';
     $('word-preview').classList.toggle('active', !!word);
-    $('word-length').textContent = `${path.length} / 6 letters`;
+    $('word-length').textContent = `${path.length} / 6`;
     drawPath();
   }
   function render(distances = []) {
@@ -188,7 +203,7 @@
         showMeaning(match.word);
         if (chain > 1) {
           $('chain-banner').hidden = false;
-          $('chain-banner').textContent = `${chain} CHAIN!  ${match.word}  +${earned} pt`;
+          $('chain-banner').textContent = `${chain} CHAIN!`;
           match.path.forEach(index => tiles.children[index].classList.add('chain-ready'));
           message(`落下で ${match.word} がそろった！ ${chain}連鎖！`);
           await delay(600);
@@ -208,22 +223,7 @@
         found.push(match.word);
         $('score').textContent = score;
         $('found-count').textContent = found.length;
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.dataset.word = match.word;
-        chip.setAttribute('aria-label', `${match.word} の意味を確認`);
-        chip.className = 'word-chip';
-        const chipWord = document.createElement('span');
-        chipWord.className = 'chip-word';
-        chipWord.lang = 'en';
-        chipWord.textContent = chain > 1 ? `${match.word} ×${chain}` : match.word;
-        const chipMeaning = document.createElement('span');
-        chipMeaning.className = 'chip-meaning';
-        chipMeaning.textContent = globalThis.WordPopDictionary[match.word] || '意味は準備中';
-        chip.append(chipWord, chipMeaning);
-        if (found.length === 1) $('found-words').replaceChildren();
-        $('found-words').prepend(chip);
-        while ($('found-words').children.length > 3) $('found-words').lastElementChild.remove();
+        renderRecentWords();
         match = chainEnabled && chain <= E.MAX_CASCADES
           ? E.findCascade(before, result, easyWords) : null;
         if (match) chain++;
@@ -235,6 +235,7 @@
       $('available-count').textContent = `5〜6文字の単語 ${count} 個`;
       message(chain > 1 ? `${chain}連鎖！ 次の単語も一直線に探してみよう。` : 'いいね！ 次の単語もまっすぐ探してみよう。');
     } finally {
+      $('chain-banner').hidden = true;
       globalThis.WordPopCharacter?.finish();
       busy = false;
       $('restart-button').disabled = false;
@@ -268,10 +269,7 @@
       slot.textContent = '—';
       $('found-words').append(slot);
     }
-    const note = document.createElement('p');
-    note.className = 'meaning-empty';
-    note.textContent = '見つけた単語の意味が、ここに表示されるよ。';
-    $('word-note').replaceChildren(note);
+    inspectedWord = null;
     $('tutorial').hidden = tutorialComplete;
     message(tutorialComplete ? '3〜6文字の英単語を探してみよう！' : 'まずは C → A → T をなぞってみよう！');
     $('chain-banner').hidden = true;

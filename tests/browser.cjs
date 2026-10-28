@@ -127,13 +127,13 @@ const fs = require('node:fs');
   await chainPage.locator('.chain-ready').first().waitFor();
   assert.equal(await chainPage.locator('#restart-button').isDisabled(),true);
   assert.equal(await chainPage.locator('#chain-toggle').isDisabled(),true);
-  assert.match(await chainPage.locator('#chain-banner').textContent(),/2 CHAIN!  CAT/);
+  assert.match(await chainPage.locator('#chain-banner').textContent(),/2 CHAIN!/);
   const highlighted=await chainPage.locator('.chain-ready').evaluateAll(tiles=>tiles.map(t=>Number(t.dataset.index)));
   assert.deepEqual(highlighted,[23,24,25]);
   await chainPage.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');
   const chips=await chainPage.locator('.chip-word').allTextContents();
   assert.ok(chips.length>=2 && chips.length<=4);
-  const expected=chips.reduce((sum,text)=>{const [word,multiplier]=text.split(' ×');return sum+word.length*10*(Number(multiplier)||1);},0);
+  const expected=90; // 固定盤面の手動DOG30点＋2連鎖CAT60点。履歴は倍率ではなく発見回数を表示。
   assert.equal(Number(await chainPage.locator('#score').textContent()),expected);
   assert.equal(await chainPage.locator('#restart-button').isEnabled(),true);
   assert.equal(await chainPage.locator('.tile').count(),56);

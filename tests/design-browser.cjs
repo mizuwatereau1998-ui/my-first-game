@@ -22,7 +22,9 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.ok(mascot.y<frame.y && mascot.y+mascot.height>=frame.y-20);
  const next=await page.evaluate(()=>WordPopEngine.findWord(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopEasyWords));
  await play(next);assert.equal(await page.locator('.word-chip').count(),3);assert.equal(await page.locator('#found-count').textContent(),'4');
- await page.locator('.word-chip').last().click();assert.equal(await page.locator('.meaning-word').textContent(),await page.locator('.word-chip').last().getAttribute('data-word'));
+ await page.locator('.word-chip').last().click();assert.equal(await page.locator('.word-chip').last().getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('.meaning-card,#word-note').count(),0);
+ assert.ok((await page.locator('.chip-count').allTextContents()).every(t=>/発見 \d+回/.test(t)));
  await page.waitForFunction(()=>document.getElementById('discovery-pop').hidden);
  fs.mkdirSync('/workspace/scratch/word-pop',{recursive:true});
  await page.screenshot({path:'/workspace/scratch/word-pop/pastel-desktop.png',fullPage:true});

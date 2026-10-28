@@ -39,7 +39,7 @@ const fs=require('node:fs'),path=require('node:path');
  assert.ok(popups.some(([w,m])=>w==='DOG'&&m==='犬'));
  assert.ok(popups.some(([w,m,c])=>w==='CAT'&&m==='猫'&&c==='2 CHAIN!'));
  assert.equal(await page.locator('#discovery-pop').isVisible(),false);
- assert.equal(await page.locator('.meaning-word').textContent(),'CAT');
+ assert.equal(await page.locator('.chip-word').first().textContent(),'CAT');
  // スマホ幅・6文字・長めの日本語訳・動きを減らす設定。
  await page.setViewportSize({width:320,height:800});await page.emulateMedia({reducedMotion:'reduce'});
  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(15,6,...'AFFORD');return b;};`}));
