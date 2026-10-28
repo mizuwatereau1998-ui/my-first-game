@@ -479,7 +479,6 @@ polyline {
 .found-words {
   display:grid;
   gap:11px;
-  counter-reset:recent;
 }
 .word-chip {
   position:relative;
@@ -489,41 +488,12 @@ polyline {
   min-width:0;
   min-height:98px;
   width:100%;
-  padding:14px 9px 14px 49px;
+  padding:17px 19px;
   text-align:left;
   border:2px solid #f2dfbc;
   border-radius:23px;
   background:linear-gradient(#fffefa,#fff8e8);
   box-shadow:0 3px 1px #9eb8bd30,inset 0 2px white;
-}
-.word-chip::before {
-  counter-increment:recent;
-  content:counter(recent);
-  position:absolute;
-  left:9px;
-  top:19px;
-  width:30px;
-  height:33px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  color:white;
-  background:linear-gradient(#ffdb66,#ffa12f);
-  border:2px solid #ffeca5;
-  box-shadow:0 2px #d39548;
-  font-size:20px;
-  font-weight:900;
-  text-shadow:0 2px #be8232;
-}
-.word-chip:nth-child(2)::before {
-  background:linear-gradient(#bce4ff,#7eaddf);
-  border-color:#dbf0ff;
-  box-shadow:0 2px #779abd;
-}
-.word-chip:nth-child(3)::before {
-  background:linear-gradient(#ffb770,#f47b35);
-  border-color:#ffd5a0;
-  box-shadow:0 2px #d0834c;
 }
 .chip-word {
   font-size:24px;
@@ -848,19 +818,11 @@ dialog p,dialog li {
     gap:7px;
   }
   .word-chip {
-    padding:34px 5px 10px;
+    padding:15px 6px;
     min-height:110px;
     border-radius:16px;
     text-align:center;
     justify-content:start;
-  }
-  .word-chip::before {
-    left:50%;
-    top:5px;
-    transform:translateX(-50%);
-    height:25px;
-    width:23px;
-    font-size:15px;
   }
   .chip-word {
     font-size:clamp(13px,3.5vw,18px);
@@ -1060,3 +1022,138 @@ dialog p,dialog li {
 .character-space,.play-controls {
   min-width:0;
 }
+
+/* 周辺UI。文字ブロックのスタイルは変更しない。 */
+@font-face {
+  font-family:"Fredoka";
+  src:url("assets/fonts/Fredoka.ttf") format("truetype");
+  font-weight:300 700;
+  font-style:normal;
+  font-display:swap;
+}
+:root { --game-font:"Fredoka","Arial Rounded MT Bold",ui-rounded,system-ui,sans-serif; }
+.score-heading,.score>span,.score small,.word-count strong,.found-card h2,.chip-word,.card-heading>span,.discovery-label,.discovery-score {
+  font-family:var(--game-font);
+  font-weight:650;
+}
+.play-header { min-height:108px; }
+.score-card {
+  border:4px solid #9beaff;
+  outline:2px solid #278bc1;
+  border-radius:30px;
+  background:radial-gradient(ellipse at 50% 0%,#e4fcff99,transparent 57%),linear-gradient(#53d2fa 0%,#31b4ee 47%,#188bd4 49%,#1278c1 100%);
+  box-shadow:inset 0 3px 0 #efffff,inset 0 -5px 0 #0864a6,0 5px 0 #086ba7,0 9px 18px #24639738;
+  color:white;
+  padding:12px 18px 13px;
+}
+.score-card::before {
+  content:"✦";
+  position:absolute;
+  top:13px;left:15px;
+  font-size:26px;color:#fff19d;
+  text-shadow:0 2px 0 #c58b29;
+}
+.score-heading { font-size:17px;letter-spacing:3px;color:#fff; text-shadow:0 2px #207cad; }
+.score>span { font-size:52px;letter-spacing:1px;color:#fffef5;text-shadow:0 3px 0 #07548d,0 1px 0 #07548d;font-variant-numeric:tabular-nums; }
+.score small { color:#d8f8ff; }
+.word-count { color:#d9f7ff; }
+.word-count strong { color:#fff7b4; }
+.game-panel { padding-top:76px; }
+.board {
+  border-color:#ffcc57;
+  outline:2px solid #cc8735;
+  border-radius:33px;
+  box-shadow:inset 0 0 0 3px #8a5450,inset 0 4px 4px #633a5355,0 0 0 5px #ffdf89,0 5px 0 5px #d49536,0 8px 0 5px #f5bb52,0 13px 20px #4b719344;
+}
+.board::before {
+  inset:-8px;
+  border:4px solid #f8bf55;
+  border-top-color:#fff8c9;
+  border-left-color:#fff0aa;
+  border-bottom-color:#e2a33f;
+  border-right-color:#f4b84d;
+  border-radius:32px;
+  box-shadow:inset 0 1px 0 #fff9,0 -1px 0 #fff5d0;
+}
+.board::after {
+  content:"";
+  position:absolute;left:7%;top:-7px;width:31%;height:4px;border-radius:100%;
+  background:linear-gradient(90deg,transparent,#fff,transparent);
+  pointer-events:none;
+}
+.frame-star {
+  position:absolute;z-index:4;pointer-events:none;color:#ffe967;
+  font-family:system-ui,sans-serif;font-size:43px;line-height:1;
+  -webkit-text-stroke:2px #f3b63e;
+  paint-order:stroke fill;
+  text-shadow:0 -2px 0 #fff9c8,0 3px 0 #ce9038,0 5px 6px #b17b3b55;
+}
+.frame-star-left { top:-24px;left:-12px;transform:rotate(-16deg); }
+.frame-star-right { top:-20px;right:-10px;font-size:34px;transform:rotate(17deg); }
+.board .character-space {
+  position:absolute;left:50%;bottom:calc(100% - 10px);
+  width:180px;height:137px;transform:translateX(-50%);z-index:1;
+  pointer-events:none;
+}
+.board .character-space::before { bottom:0;height:45px;width:145px; }
+.board .mascot { align-self:end;margin-top:0;margin-bottom:-7px;transform:rotate(-6deg); }
+.board .character-caption { display:none; }
+.character-space::after {
+  content:"";position:absolute;bottom:-5px;left:29px;right:29px;height:19px;
+  border:2px solid #f7c77a;border-radius:18px;
+  background:linear-gradient(#fff8dc,#ffe3a0);box-shadow:inset 0 2px #fff9;
+  clip-path:polygon(0 0,27% 0,27% 100%,0 100%,0 0,73% 0,100% 0,100% 100%,73% 100%,73% 0);
+}
+.word-tray { margin:18px 0 8px; }
+.sidebar { padding-top:76px; }
+.found-card {
+  position:relative;border:5px solid #e6fbff;
+  outline:2px solid #75c8ec;border-radius:35px;
+  background:radial-gradient(ellipse at 40% 0%,#e3fbffbb,transparent 48%),linear-gradient(#7ed9fa,#d8f4ff 47%,#c7edfb);
+  box-shadow:inset 0 3px 0 #fff,inset -4px -5px 0 #9bdcf2,inset 4px 0 0 #fff8,0 5px 0 #74bfdf,0 10px 20px #316d9840;
+  padding:22px 14px 20px;
+}
+.found-card::before {
+  content:"";position:absolute;top:10px;left:10px;width:24%;height:7px;
+  transform:rotate(-12deg);border-radius:50%;background:#ffffffe0;pointer-events:none;
+}
+.found-card h2 { color:#15568b;font-size:22px;letter-spacing:.8px;line-height:1.1;text-shadow:0 2px 0 #f3fdff; }
+.recent-caption { color:#4588a7;margin:7px 0 19px; }
+.word-chip {
+  padding:18px 17px;min-height:100px;border:2px solid #ead7b2;border-radius:22px;
+  background:radial-gradient(ellipse at 40% 0%,#fff,transparent 65%),linear-gradient(#fffcf0,#fff3d6);
+  box-shadow:inset 0 3px 0 #fff,inset 0 -3px 0 #f2e5c8,0 3px 0 #7bb7d440;
+}
+.word-chip:hover { border-color:#89c7df; }
+.chip-word { font-size:29px;letter-spacing:.5px;color:#145891; }
+.chip-meaning { font-weight:650;color:#795c4c;line-height:1.7; }
+.empty-slot { background:linear-gradient(#fffdf2b3,#fff3d69e);border-color:#b4dae7; }
+@media(max-width:700px) {
+  .play-header { min-height:108px; }
+  .score-card { padding:9px 6px 10px;border-width:3px;border-radius:22px; }
+  .score-card::before { top:10px;left:7px;font-size:15px; }
+  .score-heading { font-size:13px;letter-spacing:2px; }
+  .score>span { font-size:36px;letter-spacing:0; }
+  .game-panel { padding-top:58px; }
+  .board { border-radius:25px; }
+  .board::before { border-radius:24px; }
+  .frame-star-left { left:-9px;top:-19px;font-size:32px; }
+  .frame-star-right { right:-8px;top:-17px;font-size:28px; }
+  .board .character-space { width:145px;height:111px;bottom:calc(100% - 9px); }
+  .board .mascot { transform:scale(.76) rotate(-6deg);transform-origin:center bottom;margin-bottom:-2px; }
+  .board .character-space::before { width:110px;height:35px; }
+  .character-space::after { left:25px;right:25px;height:15px; }
+  .sidebar { padding-top:0; }
+  .found-card { padding:18px 10px 15px;border-radius:27px; }
+  .found-card h2 { font-size:23px; }
+  .recent-caption { margin-bottom:14px; }
+  .word-chip { padding:14px 6px;min-height:97px;border-radius:16px; }
+  .chip-word { font-size:clamp(15px,4.2vw,21px);letter-spacing:0; }
+  .chip-meaning { font-size:11px;line-height:1.6; }
+}
+@media(max-width:350px) {
+  .score-heading { font-size:12px;letter-spacing:1.5px; }
+  .score>span { font-size:31px; }
+  .score-card::before { font-size:12px;left:5px; }
+}
+.play-controls { grid-column:3; }

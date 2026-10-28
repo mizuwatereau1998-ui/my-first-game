@@ -3,6 +3,11 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  const context=await browser.newContext({viewport:{width:1222,height:1287}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');
  await page.locator('#chain-toggle').uncheck();
+ await page.evaluate(()=>document.fonts.ready);
+ assert.equal(await page.locator('.score-heading').textContent(),'SCORE');
+ assert.equal(await page.locator('.found-card h2').textContent(),'RECENT WORDS');
+ assert.equal(await page.locator('.word-chip').count(),0);
+ assert.equal(await page.evaluate(()=>document.fonts.check('650 20px Fredoka')),true);
  assert.equal(await page.locator('.tile').count(),56);
  assert.equal(await page.locator('.brand,.intro,h1').count(),0);
  assert.equal(await page.locator('.character-space').isVisible(),true);
@@ -12,6 +17,9 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await play([16,17,18]);await play([35,36,37]);await play([34,40,46]);
  assert.deepEqual(await page.locator('.chip-word').allTextContents(),['SUN','DOG','CAT']);
  assert.deepEqual(await page.locator('.chip-meaning').allTextContents(),['太陽','犬','猫']);
+ assert.ok(await page.locator('.word-chip').evaluateAll(cards=>cards.every(e=>['none','normal'].includes(getComputedStyle(e,'::before').content))));
+ const mascot=await page.locator('.mascot').boundingBox(),frame=await page.locator('#board').boundingBox();
+ assert.ok(mascot.y<frame.y && mascot.y+mascot.height>=frame.y-20);
  const next=await page.evaluate(()=>WordPopEngine.findWord(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopEasyWords));
  await play(next);assert.equal(await page.locator('.word-chip').count(),3);assert.equal(await page.locator('#found-count').textContent(),'4');
  await page.locator('.word-chip').last().click();assert.equal(await page.locator('.meaning-word').textContent(),await page.locator('.word-chip').last().getAttribute('data-word'));

@@ -14,15 +14,16 @@
 <body>
   <main class="play-screen" aria-label="Word Pop! ゲーム画面">
     <header class="play-header">
-      <section class="score-card" aria-label="スコア"><span class="score-heading">スコア</span><div class="score"><span id="score">0</span><small>pt</small></div><div class="word-count">みつけた単語 <strong id="found-count">0</strong> 個</div></section>
-      <div class="character-space" aria-label="キャラクター画像を配置する仮スペース"><div class="mascot" aria-hidden="true"><i class="ear ear-left"></i><i class="ear ear-right"></i><div class="mascot-face"><i class="eye eye-left"></i><i class="eye eye-right"></i><i class="cheek cheek-left"></i><i class="cheek cheek-right"></i><i class="mouth"></i></div><div class="scarf"></div></div><span class="character-caption">キャラクター準備中</span></div>
+      <section class="score-card" aria-label="スコア"><span class="score-heading">SCORE</span><div class="score"><span id="score">0</span><small>pt</small></div><div class="word-count">みつけた単語 <strong id="found-count">0</strong> 個</div></section>
+
       <nav class="play-controls" aria-label="ゲーム操作"><button id="help-button" class="icon-button" aria-label="遊び方を開く">?</button><button id="restart-button" class="restart-button"><span>↻</span> はじめから</button><label class="chain-option"><input id="chain-toggle" type="checkbox" checked> 自動連鎖</label></nav>
     </header>
     <div class="game-layout">
       <section class="game-panel" aria-label="英単語ゲーム">
-        <div class="word-tray"><span id="word-preview" class="word-preview">文字をつなげよう</span><span id="word-length">0 letters</span></div>
+
         <div id="chain-banner" class="chain-banner" role="status" hidden></div>
-        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div><div id="discovery-pop" class="discovery-pop" aria-hidden="true" hidden><div class="discovery-burst"><span id="discovery-label" class="discovery-label"></span><strong id="discovery-word" class="discovery-word" lang="en"></strong><span id="discovery-meaning" class="discovery-meaning"></span><span id="discovery-score" class="discovery-score"></span></div></div></div>
+        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><div class="character-space" aria-label="キャラクター画像を配置する仮スペース"><div class="mascot" aria-hidden="true"><i class="ear ear-left"></i><i class="ear ear-right"></i><div class="mascot-face"><i class="eye eye-left"></i><i class="eye eye-right"></i><i class="cheek cheek-left"></i><i class="cheek cheek-right"></i><i class="mouth"></i></div><div class="scarf"></div></div><span class="character-caption">キャラクター準備中</span></div><span class="frame-star frame-star-left" aria-hidden="true">★</span><span class="frame-star frame-star-right" aria-hidden="true">★</span><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div><div id="discovery-pop" class="discovery-pop" aria-hidden="true" hidden><div class="discovery-burst"><span id="discovery-label" class="discovery-label"></span><strong id="discovery-word" class="discovery-word" lang="en"></strong><span id="discovery-meaning" class="discovery-meaning"></span><span id="discovery-score" class="discovery-score"></span></div></div></div>
+        <div class="word-tray"><span id="word-preview" class="word-preview">文字をつなげよう</span><span id="word-length">0 letters</span></div>
         <section id="tutorial" class="tip-card"><strong>はじめの一歩</strong><span>光っている C → A → T をなぞってね！</span></section>
         <p id="idle-hint-note" class="idle-hint-note" role="status" hidden>光っている文字を、番号順にまっすぐなぞってみよう。</p>
         <p id="available-count" class="available-count"></p>
@@ -30,7 +31,7 @@
         <div class="game-bottom"><span>↗ タテ・ヨコ・斜めにまっすぐ</span><button id="submit-button" class="text-button">決定 <span>↵</span></button></div>
       </section>
       <aside class="sidebar">
-        <section class="found-card"><h2>みつけた単語</h2><p class="recent-caption">さいきんの3つ</p><div id="found-words" class="found-words"><p class="empty-state">見つけた単語がここに並ぶよ。</p></div></section>
+        <section class="found-card"><h2>RECENT WORDS</h2><p class="recent-caption">さいきんの3つ</p><div id="found-words" class="found-words"><p class="empty-state">見つけた単語がここに並ぶよ。</p></div></section>
         <section class="meaning-card" aria-label="正解した単語の意味">
           <div class="card-heading"><h2>ことばのメモ</h2><span>WORD NOTE</span></div>
           <div id="word-note" aria-live="polite"><p class="meaning-empty">見つけた単語の意味が、ここに表示されるよ。</p></div>
