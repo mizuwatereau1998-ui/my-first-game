@@ -1,3 +1,4 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -9,7 +10,7 @@ const path=require('node:path');
  const page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.clock.install();
- await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');
+ await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, true);
  await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
  await page.locator('#chain-toggle').uncheck(); // 停止した時計で、ここから15秒を計測。
  const before=await page.locator('.tile').allTextContents();
@@ -38,6 +39,7 @@ const path=require('node:path');
  assert.equal(await page.locator('.idle-hint').count(),3);
  await page.emulateMedia({reducedMotion:'reduce'});
  assert.equal(await page.locator('.idle-hint').first().evaluate(t=>getComputedStyle(t).animationName),'none');
+ page.once('dialog',d=>d.accept());await page.locator('#restart-button').click();
  async function keyboardWord(start,length){
   await page.locator('.tile').nth(start).focus();
   for(let n=0;n<length;n++){await page.keyboard.press('Space');if(n<length-1)await page.keyboard.press('ArrowRight');}
@@ -71,7 +73,7 @@ const path=require('node:path');
  // 意味未整備でも登録語は正解。訳を捏造せず準備中を表示。
  await page.route('**/engine.js',route=>route.fulfill({contentType:'application/javascript',body:
   fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,5,...'ATLAS');return b;};`}));
- await page.reload();await page.locator('#chain-toggle').uncheck();
+ await page.reload();await dismissStartHelp(page, true);await page.locator('#chain-toggle').uncheck();
  await keyboardWord(16,5);
  assert.equal(await page.locator('.chip-word').first().textContent(),'ATLAS');
  assert.equal(await page.locator('.chip-meaning').first().textContent(),'意味は準備中');

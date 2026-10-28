@@ -1,3 +1,4 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path');
@@ -27,7 +28,7 @@ const fs = require('node:fs'), path = require('node:path');
    },ms);
   }
   for(const width of [1200,390,320]) {
-   await page.setViewportSize({width,height:1100});await page.goto(url);
+   await page.setViewportSize({width,height:1100});await page.goto(url);await dismissStartHelp(page, true);
    await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
    await page.locator('#chain-toggle').uncheck();
    await enter([15,16,17,18,19,20]);
@@ -68,7 +69,7 @@ const fs = require('node:fs'), path = require('node:path');
   await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(15,6,...${JSON.stringify(untranslated)});return b;};
   `}));
-  await page.emulateMedia({reducedMotion:'reduce'});await page.goto(url);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.goto(url);await dismissStartHelp(page, true);
   await page.locator('#chain-toggle').uncheck();await enter([15,16,17,18,19,20]);await page.clock.runFor(620);
   assert.equal(await page.locator('#discovery-meaning').textContent(),'意味は準備中');
   assert.equal(await page.locator('#discovery-score').textContent(),'+60 pt');

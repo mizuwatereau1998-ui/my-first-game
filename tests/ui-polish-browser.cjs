@@ -1,3 +1,4 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -6,7 +7,7 @@ const fs=require('node:fs');
  try {
   const page=await browser.newPage({viewport:{width:1200,height:1100}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');
+  await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, false);
   await page.evaluate(()=>document.fonts.ready);await page.waitForSelector('#pop-image img');
   await page.locator('#chain-toggle').uncheck();
   async function play(indices) {

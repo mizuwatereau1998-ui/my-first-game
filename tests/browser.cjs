@@ -1,3 +1,4 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 // Playwright と Chromium のある開発環境で実行するブラウザ検証。
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
@@ -9,7 +10,7 @@ const fs = require('node:fs');
     const context=await browser.newContext(options);
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');
+    await page.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');await dismissStartHelp(page, false);
     await page.waitForSelector('.tile');
     await page.locator('#chain-toggle').uncheck();
     return {context,page};
@@ -65,18 +66,18 @@ const fs = require('node:fs');
   await page.keyboard.press('Space'); await page.keyboard.press('Enter');
   await page.waitForFunction(()=>document.getElementById('score').textContent==='30');
   // 別の新規ページで、縦の BOOK を実際になぞる。
-  const vertical=await context.newPage(); await vertical.goto('http://127.0.0.1:8000');
+  const vertical=await context.newPage(); await vertical.goto('http://127.0.0.1:8000');await dismissStartHelp(vertical, false);
   await vertical.locator('#chain-toggle').uncheck();
   await drag(vertical,[0,7,14,21]);
   await vertical.waitForFunction(()=>document.getElementById('score').textContent==='40');
   assert.equal(await vertical.locator('#found-words .chip-word').textContent(),'BOOK');
   await vertical.close();
-  await page.reload();
+  await page.reload();await dismissStartHelp(page, false);
   assert.equal(await page.locator('#tutorial').isVisible(),false);
   assert.equal(await page.locator('.tile.hint').count(),0);
-  await page.locator('#help-button').click();assert.equal(await page.locator('dialog').isVisible(),true);
+  await page.locator('#help-button').click();assert.equal(await page.locator('#help-dialog').isVisible(),true);
   await page.locator('#close-help').click();
-  await page.locator('#restart-button').click();
+  page.once('dialog',dialog=>dialog.accept());await page.locator('#restart-button').click();
   assert.equal(await page.locator('.tile').count(),56);
   fs.mkdirSync('/workspace/scratch/word-pop',{recursive:true});
   await page.screenshot({path:'/workspace/scratch/word-pop/desktop.png',fullPage:true});
@@ -122,7 +123,7 @@ const fs = require('node:fs');
         const b=Array(56).fill('Z');b[16]='C';b[24]='A';b[25]='T';b.splice(21,3,'D','O','G');return b;
       };`
   }));
-  await chainPage.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');
+  await chainPage.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');await dismissStartHelp(chainPage, false);
   await drag(chainPage,[21,22,23]);
   await chainPage.locator('.chain-ready').first().waitFor();
   assert.equal(await chainPage.locator('#restart-button').isDisabled(),true);
@@ -145,7 +146,7 @@ const fs = require('node:fs');
   local.on('pageerror',e=>errors.push(e.message));
   let fileLoaded = false;
   try {
-    await local.goto(require('node:url').pathToFileURL(require('node:path').resolve(__dirname,'../index.html')).href);
+    await local.goto(require('node:url').pathToFileURL(require('node:path').resolve(__dirname,'../index.html')).href);await dismissStartHelp(local, false);
     fileLoaded = true;
   } catch (error) {
     if (!error.message.includes('ERR_BLOCKED_BY_ADMINISTRATOR')) throw error;

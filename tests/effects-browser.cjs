@@ -1,3 +1,4 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
@@ -6,7 +7,7 @@ const fs=require('node:fs'),path=require('node:path');
  try{
  const context=await browser.newContext({viewport:{width:1200,height:1000}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.clock.install();await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');
+ await page.clock.install();await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, true);
  await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
  await page.locator('#chain-toggle').uncheck();
  async function enterWord(start,length){await page.locator('.tile').nth(start).focus();for(let n=0;n<length;n++){await page.keyboard.press('Space');if(n<length-1)await page.keyboard.press('ArrowRight');}await page.keyboard.press('Enter');}
@@ -32,7 +33,7 @@ const fs=require('node:fs'),path=require('node:path');
  assert.equal(await page.locator('.tile.selected').count(),1);await page.mouse.up();
  // 連鎖のたびに単語・訳・連鎖ラベルが切り替わり、最後は自動で消える。
  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\n// 偶然の追加連鎖で最終履歴が変わらないよう、補充文字だけをZに固定する。\nMath.random=()=>.99;WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b[16]='C';b[24]='A';b[25]='T';b.splice(21,3,'D','O','G');return b;};`}));
- await page.reload();
+ await page.reload();await dismissStartHelp(page, true);
  await page.evaluate(()=>{window.popups=[];new MutationObserver(()=>popups.push([document.getElementById('discovery-word').textContent,document.getElementById('discovery-meaning').textContent,document.getElementById('discovery-label').textContent])).observe(document.getElementById('discovery-word'),{childList:true});});
  await enterWord(21,3);await page.clock.runFor(5000);
  const popups=await page.evaluate(()=>popups);
@@ -43,7 +44,7 @@ const fs=require('node:fs'),path=require('node:path');
  // スマホ幅・6文字・長めの日本語訳・動きを減らす設定。
  await page.setViewportSize({width:320,height:800});await page.emulateMedia({reducedMotion:'reduce'});
  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(15,6,...'AFFORD');return b;};`}));
- await page.reload();await page.locator('#chain-toggle').uncheck();
+ await page.reload();await dismissStartHelp(page, true);await page.locator('#chain-toggle').uncheck();
  await enterWord(15,6);await page.clock.runFor(620);
  assert.equal(await page.locator('#discovery-word').textContent(),'AFFORD');
  assert.equal(await page.locator('#discovery-meaning').textContent(),'〜する余裕がある');

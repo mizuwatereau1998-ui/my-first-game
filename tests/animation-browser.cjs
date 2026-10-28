@@ -1,3 +1,4 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 // 実際のCSS移動と入力ロックを検証。連鎖の段階表示だけは候補を固定する。
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
@@ -17,7 +18,7 @@ const path = require('node:path');
     `}));
     const url = process.env.GAME_URL || 'http://127.0.0.1:8000';
     async function load() {
-      await page.goto(url);
+      await page.goto(url);await dismissStartHelp(page, true);
       await page.clock.pauseAt(await page.evaluate(() => Date.now()+1000));
       await page.locator('#chain-toggle').uncheck();
     }

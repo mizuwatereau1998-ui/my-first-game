@@ -1,7 +1,8 @@
+const dismissStartHelp = require('./dismiss-start-help.cjs');
 const {chromium}=require('playwright');const assert=require('node:assert/strict');const fs=require('node:fs');
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});try{
  const context=await browser.newContext({viewport:{width:1222,height:1287}}),page=await context.newPage(),errors=[];
- page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');
+ page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, false);
  await page.locator('#chain-toggle').uncheck();
  await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.locator('.score-heading').textContent(),'SCORE');
