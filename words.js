@@ -26,3 +26,6 @@ globalThis.WordPopWords = new Set([
 ]);
 // 盤面づくり・今後のヒント用のやさしい語。正解用の広い語彙とは分離します。
 globalThis.WordPopEasyWords = new Set(Object.keys(globalThis.WordPopDictionary).filter(word => word.length <= 4));
+
+// 配置とヒントでは、訳を表示できる5〜6文字を優先する。正解語彙は削らない。
+globalThis.WordPopLongWords = new Set(Object.keys(globalThis.WordPopDictionary).filter(word => word.length >= 5 && word.length <= 6));

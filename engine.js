@@ -13,8 +13,13 @@
     [[16, 'C'], [17, 'A'], [18, 'T'], [35, 'D'], [36, 'O'], [37, 'G'],
       [0, 'B'], [7, 'O'], [14, 'O'], [21, 'K'], [48, 'S'], [47, 'U'], [46, 'N'], [34, 'S'], [40, 'U']]
       .forEach(([index, letter]) => { board[index] = letter; });
-    for (const [start, word] of [[1,'APPLE'],[8,'BEE'],[11,'DOG'],[22,'FISH'],
-      [28,'STAR'],[32,'BUS'],[38,'BLUE'],[42,'MILK'],[49,'CAT'],[52,'BOOK']]) {
+    const pool = [...(globalThis.WordPopLongWords || new Set(['APPLE','ORANGE','BANANA','HOUSE','LEMON','FLOWER']))];
+    const used = new Set();
+    // 5文字・6文字を各3語。短いチュートリアル経路とは競合しない場所に置く。
+    for (const [start, length, ending] of [[42,5,'N'],[1,5],[8,6],[22,6],[28,5],[49,6]]) {
+      const options = pool.filter(word => word.length === length && !used.has(word) && (!ending || word.endsWith(ending)));
+      const word = options[Math.floor(random() * options.length)];
+      used.add(word);
       [...word].forEach((letter, offset) => { board[start + offset] = letter; });
     }
     return board;
@@ -86,13 +91,39 @@
     return paths;
   }
   const shortPaths = [...straightPaths(3), ...straightPaths(4)];
+  const longPaths = [...straightPaths(5), ...straightPaths(6)];
   function straightWords(board, easyWords) {
     const matches = [];
-    for (const path of shortPaths) {
+    const paths = [...easyWords].some(word => word.length >= 5) ? [...shortPaths, ...longPaths] : shortPaths;
+    for (const path of paths) {
       const word = path.map(index => board[index]).join('');
       if (easyWords.has(word)) matches.push({word, path});
     }
     return matches;
+  }
+  function refillLongWords(result, longWords, random = Math.random) {
+    const fresh = new Set(result.fresh), current = straightWords(result.board, longWords);
+    // すでに複数の長い語があるときは、通常の文字抽選を残す。
+    if (new Set(current.map(match => match.word)).size >= 3 && current.some(m => m.word.length === 5) && current.some(m => m.word.length === 6)) return result;
+    const byLength = new Map([5,6].map(n => [n,[...longWords].filter(w => w.length === n)]));
+    const options = [];
+    for (const path of longPaths) {
+      if (!path.some(index => fresh.has(index))) continue;
+      for (const word of byLength.get(path.length)) {
+        if (path.every((index,n) => fresh.has(index) || result.board[index] === word[n])) options.push({word,path});
+      }
+    }
+    if (!options.length) return result;
+    // 盤面にない語を優先。同じAPPLEだけが再補充されることを避ける。
+    const existing = new Set(current.map(m => m.word));
+    const novel = options.filter(option => !existing.has(option.word));
+    const candidates = novel.length ? novel : options;
+    const missingLength = !current.some(m => m.word.length === 6) ? 6 : !current.some(m => m.word.length === 5) ? 5 : null;
+    const preferred = candidates.filter(option => option.word.length === missingLength);
+    const pool = preferred.length ? preferred : candidates;
+    const chosen = pool[Math.floor(random() * pool.length)], board = [...result.board];
+    chosen.path.forEach((index,n) => { if (fresh.has(index)) board[index] = chosen.word[n]; });
+    return {...result, board, protected: chosen.path};
   }
   const matchKey = match => `${match.word}:${match.path.join(',')}`;
   function findCascade(before, result, easyWords) {
@@ -100,6 +131,8 @@
     const fresh = new Set(result.fresh);
     const candidates = straightWords(result.board, easyWords).filter(match => {
       if (previous.has(matchKey(match))) return false;
+      // 手動で発見するために配置した長い語を、その中の短い語で即消去しない。
+      if (match.path.some(index => result.protected?.includes(index))) return false;
       const shifts = match.path.map(index => result.distances[index]);
       // 偶然の補充でそろった単語も連鎖可。既存単語全体の平行移動だけは除外。
       return shifts.some(distance => distance > 0) &&
@@ -112,5 +145,5 @@
     return candidates.sort((a,b) => centrality(a) - centrality(b))[0] || null;
   }
 
-  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, findCascade, MAX_CASCADES };
+  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, refillLongWords, findCascade, MAX_CASCADES };
 })();

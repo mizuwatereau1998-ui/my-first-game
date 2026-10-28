@@ -13,8 +13,8 @@ test('縦横斜めの一直線だけ。L字・途中の折り返しは不可、1
   const b=Array(56).fill('Z');b[0]='C';b[1]='A';b[8]='T';
   assert.equal(E.findWord(b,new Set(['CAT'])),null);
 });
-test('初期盤面には少なくとも10種類の簡単な一直線単語がある',()=>{
-  for(let seed=0;seed<30;seed++)assert.ok(new Set(E.straightWords(E.createBoard(rng(seed)),easy).map(m=>m.word)).size>=10);
+test('初期盤面には少なくとも6種類の5〜6文字単語がある',()=>{
+  for(let seed=0;seed<30;seed++)assert.ok(new Set(E.straightWords(E.createBoard(rng(seed)),WordPopLongWords).map(m=>m.word)).size>=6);
 });
 test('補充は単語の埋め込みをせず、1文字ずつ抽選して既存文字を保持する',()=>{
   const b=E.createBoard(rng(82));

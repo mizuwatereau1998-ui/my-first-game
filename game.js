@@ -4,6 +4,7 @@
   const $ = id => document.getElementById(id);
   $('vocabulary-count').textContent = dictionary.size.toLocaleString('ja-JP');
   const easyWords = globalThis.WordPopEasyWords;
+  const longWords = globalThis.WordPopLongWords;
   const boardElement = $('board'), tiles = $('tiles');
   const tutorialPath = [16, 17, 18];
   const storageKey = 'word-pop-tutorial-complete-v1';
@@ -12,6 +13,7 @@
   try { tutorialComplete = localStorage.getItem(storageKey) === 'true'; } catch { /* 保存不可でも遊べます。 */ }
   const IDLE_HINT_MS = 15000;
   let hintTimer = null;
+  let lastLongHintLength = 6;
   function clearIdleHint() {
     clearTimeout(hintTimer);
     hintTimer = null;
@@ -28,8 +30,11 @@
     hintTimer = setTimeout(() => {
       hintTimer = null;
       if (busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open) return;
+      const longMatches = E.straightWords(board, longWords);
+      const longMatch = longMatches.find(match => match.word.length !== lastLongHintLength) || longMatches[0];
       const answer = !tutorialComplete ? tutorialPath :
-        (E.findWord(board, easyWords) || E.findWord(board, dictionary));
+        (longMatch?.path || E.findWord(board, easyWords) || E.findWord(board, dictionary));
+      if (tutorialComplete && longMatch) lastLongHintLength = longMatch.word.length;
       if (!answer) return;
       answer.forEach((index, order) => {
         const tile = tiles.children[index];
@@ -193,7 +198,7 @@
         await delay(240);
         showDiscovery(match.word, chain, earned);
         const before = [...board];
-        const result = E.collapse(board, match.path);
+        const result = E.refillLongWords(E.collapse(board, match.path), longWords);
         board = result.board;
         path = [];
         render(result.distances);
@@ -225,8 +230,8 @@
       // 3,000語のどれかではなく、身近な短い語を最低1つ残します。
       const rescued = E.ensurePlayable(board, easyWords);
       if (rescued) render();
-      const count = new Set(E.straightWords(board, easyWords).map(m => m.word)).size;
-      $('available-count').textContent = `見つけやすい単語 ${count} 個`;
+      const count = new Set(E.straightWords(board, longWords).map(m => m.word)).size;
+      $('available-count').textContent = `5〜6文字の単語 ${count} 個`;
       message(chain > 1 ? `${chain}連鎖！ 次の単語も一直線に探してみよう。` : 'いいね！ 次の単語もまっすぐ探してみよう。');
     } finally {
       busy = false;
@@ -245,6 +250,7 @@
     hideDiscovery();
     releasePointer();
     board = E.createBoard();
+    lastLongHintLength = 6;
     path = []; score = 0; found = [];
     $('score').textContent = '0';
     $('found-count').textContent = '0';
@@ -266,7 +272,7 @@
     $('tutorial').hidden = tutorialComplete;
     message(tutorialComplete ? '3〜6文字の英単語を探してみよう！' : 'まずは C → A → T をなぞってみよう！');
     $('chain-banner').hidden = true;
-    $('available-count').textContent = `見つけやすい単語 ${new Set(E.straightWords(board, easyWords).map(m => m.word)).size} 個`;
+    $('available-count').textContent = `5〜6文字の単語 ${new Set(E.straightWords(board, longWords).map(m => m.word)).size} 個`;
     render();
     scheduleIdleHint();
   }
