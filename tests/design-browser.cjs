@@ -18,7 +18,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.deepEqual(await page.locator('.chip-word').allTextContents(),['SUN','DOG','CAT']);
  assert.deepEqual(await page.locator('.chip-meaning').allTextContents(),['太陽','犬','猫']);
  assert.ok(await page.locator('.word-chip').evaluateAll(cards=>cards.every(e=>['none','normal'].includes(getComputedStyle(e,'::before').content))));
- const mascot=await page.locator('.mascot').boundingBox(),frame=await page.locator('#board').boundingBox();
+ const mascot=await page.locator('.has-pop-image #pop-image, .character-space:not(.has-pop-image) .mascot').boundingBox(),frame=await page.locator('#board').boundingBox();
  assert.ok(mascot.y<frame.y && mascot.y+mascot.height>=frame.y-20);
  const next=await page.evaluate(()=>WordPopEngine.findWord(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopEasyWords));
  await play(next);assert.equal(await page.locator('.word-chip').count(),3);assert.equal(await page.locator('#found-count').textContent(),'4');

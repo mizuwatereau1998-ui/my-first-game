@@ -9,6 +9,7 @@
   <script defer src="vocabulary.js"></script>
   <script defer src="words.js"></script>
   <script defer src="engine.js"></script>
+  <script defer src="character.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
@@ -22,7 +23,7 @@
       <section class="game-panel" aria-label="英単語ゲーム">
 
         <div id="chain-banner" class="chain-banner" role="status" hidden></div>
-        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><div class="character-space" aria-label="キャラクター画像を配置する仮スペース"><div class="mascot" aria-hidden="true"><i class="ear ear-left"></i><i class="ear ear-right"></i><div class="mascot-face"><i class="eye eye-left"></i><i class="eye eye-right"></i><i class="cheek cheek-left"></i><i class="cheek cheek-right"></i><i class="mouth"></i></div><div class="scarf"></div></div><span class="character-caption">キャラクター準備中</span></div><span class="frame-star frame-star-left" aria-hidden="true">★</span><span class="frame-star frame-star-right" aria-hidden="true">★</span><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div><div id="discovery-pop" class="discovery-pop" aria-hidden="true" hidden><div class="discovery-burst"><span id="discovery-label" class="discovery-label"></span><strong id="discovery-word" class="discovery-word" lang="en"></strong><span id="discovery-meaning" class="discovery-meaning"></span><span id="discovery-score" class="discovery-score"></span></div></div></div>
+        <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><div class="character-space" aria-label="ポップン" data-pop-state="idle"><div id="pop-image" aria-hidden="true"></div><div class="mascot" aria-hidden="true"><i class="ear ear-left"></i><i class="ear ear-right"></i><div class="mascot-face"><i class="eye eye-left"></i><i class="eye eye-right"></i><i class="cheek cheek-left"></i><i class="cheek cheek-right"></i><i class="mouth"></i></div><div class="scarf"></div></div><span class="character-caption">キャラクター準備中</span></div><span class="frame-star frame-star-left" aria-hidden="true">★</span><span class="frame-star frame-star-right" aria-hidden="true">★</span><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div><div id="discovery-pop" class="discovery-pop" aria-hidden="true" hidden><div class="discovery-burst"><span id="discovery-label" class="discovery-label"></span><strong id="discovery-word" class="discovery-word" lang="en"></strong><span id="discovery-meaning" class="discovery-meaning"></span><span id="discovery-score" class="discovery-score"></span></div></div></div>
         <div class="word-tray"><span id="word-preview" class="word-preview">文字をつなげよう</span><span id="word-length">0 letters</span></div>
         <section id="tutorial" class="tip-card"><strong>はじめの一歩</strong><span>光っている C → A → T をなぞってね！</span></section>
         <p id="idle-hint-note" class="idle-hint-note" role="status" hidden>光っている文字を、番号順にまっすぐなぞってみよう。</p>

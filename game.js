@@ -183,6 +183,7 @@
     let match = {word, path: selected}, chain = 1;
     try {
       while (match) {
+        globalThis.WordPopCharacter?.react(chain);
         const earned = match.word.length * 10 * chain;
         showMeaning(match.word);
         if (chain > 1) {
@@ -234,6 +235,7 @@
       $('available-count').textContent = `5〜6文字の単語 ${count} 個`;
       message(chain > 1 ? `${chain}連鎖！ 次の単語も一直線に探してみよう。` : 'いいね！ 次の単語もまっすぐ探してみよう。');
     } finally {
+      globalThis.WordPopCharacter?.finish();
       busy = false;
       $('restart-button').disabled = false;
       $('submit-button').disabled = false;
@@ -249,6 +251,7 @@
     clearIdleHint();
     hideDiscovery();
     releasePointer();
+    globalThis.WordPopCharacter?.reset();
     board = E.createBoard();
     lastLongHintLength = 6;
     path = []; score = 0; found = [];
