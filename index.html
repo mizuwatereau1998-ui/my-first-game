@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f6ef">
+  <meta name="theme-color" content="#b9ecfc">
   <title>Word Pop! — なぞって、見つけて、はじけよう。</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="vocabulary.js"></script>
@@ -12,32 +12,32 @@
   <script defer src="game.js"></script>
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="./" aria-label="Word Pop! ホーム"><span class="brand-icon">w<span>✦</span></span>Word Pop<span class="orange">!</span></a><span class="header-note">ひと休みに、ことばあそび。</span><button id="help-button" class="icon-button" aria-label="遊び方を開く">?</button></header>
-  <main>
-    <section class="intro"><div class="eyebrow"><span></span> LITTLE WORDS, BIG DISCOVERIES</div><h1>つなげるたびに、<br class="mobile-break">ひらめきが<span class="accent">ポン！</span></h1><p>タテ・ヨコ・斜めにまっすぐなぞって、英単語を見つけよう。</p></section>
+  <main class="play-screen" aria-label="Word Pop! ゲーム画面">
+    <header class="play-header">
+      <section class="score-card" aria-label="スコア"><span class="score-heading">スコア</span><div class="score"><span id="score">0</span><small>pt</small></div><div class="word-count">みつけた単語 <strong id="found-count">0</strong> 個</div></section>
+      <div class="character-space" aria-label="キャラクター画像を配置する仮スペース"><div class="mascot" aria-hidden="true"><i class="ear ear-left"></i><i class="ear ear-right"></i><div class="mascot-face"><i class="eye eye-left"></i><i class="eye eye-right"></i><i class="cheek cheek-left"></i><i class="cheek cheek-right"></i><i class="mouth"></i></div><div class="scarf"></div></div><span class="character-caption">キャラクター準備中</span></div>
+      <nav class="play-controls" aria-label="ゲーム操作"><button id="help-button" class="icon-button" aria-label="遊び方を開く">?</button><button id="restart-button" class="restart-button"><span>↻</span> はじめから</button><label class="chain-option"><input id="chain-toggle" type="checkbox" checked> 自動連鎖</label></nav>
+    </header>
     <div class="game-layout">
       <section class="game-panel" aria-label="英単語ゲーム">
-        <div class="game-top"><span class="mode-label"><span>✦</span> のんびりモード</span><label class="chain-option"><input id="chain-toggle" type="checkbox" checked> 自動連鎖</label></div>
         <div class="word-tray"><span id="word-preview" class="word-preview">文字をつなげよう</span><span id="word-length">0 letters</span></div>
         <div id="chain-banner" class="chain-banner" role="status" hidden></div>
         <div id="board" class="board" aria-label="7列8行の文字盤面。文字はスペースで選択、矢印キーで移動、Enterで決定。"><svg id="connections" aria-hidden="true"><polyline id="selected-line"/><polyline id="hint-line"/></svg><div id="tiles" class="tiles"></div><div id="discovery-pop" class="discovery-pop" aria-hidden="true" hidden><div class="discovery-burst"><span id="discovery-label" class="discovery-label"></span><strong id="discovery-word" class="discovery-word" lang="en"></strong><span id="discovery-meaning" class="discovery-meaning"></span><span id="discovery-score" class="discovery-score"></span></div></div></div>
+        <section id="tutorial" class="tip-card"><strong>はじめの一歩</strong><span>光っている C → A → T をなぞってね！</span></section>
         <p id="idle-hint-note" class="idle-hint-note" role="status" hidden>光っている文字を、番号順にまっすぐなぞってみよう。</p>
         <p id="available-count" class="available-count"></p>
         <div class="feedback-row"><span id="feedback" role="status" aria-live="polite">まずは C → A → T をなぞってみよう！</span></div>
         <div class="game-bottom"><span>↗ タテ・ヨコ・斜めにまっすぐ</span><button id="submit-button" class="text-button">決定 <span>↵</span></button></div>
       </section>
       <aside class="sidebar">
-        <section class="score-card"><div class="card-label">YOUR DISCOVERIES <span>✧</span></div><div class="score"><span id="score">0</span><span>pt</span></div><div class="score-divider"></div><div class="word-count"><span>見つけた単語</span><strong><span id="found-count">0</span> <small>words</small></strong></div></section>
-        <section id="tutorial" class="tip-card"><div class="tip-title"><span>✦</span> はじめの一歩</div><p>光っている <strong>C → A → T</strong> を<br>順番になぞって、指を離してね。</p><div class="sample-word"><span>C</span><i>→</i><span>A</span><i>→</i><span>T</span><b>ねこ</b></div></section>
+        <section class="found-card"><h2>みつけた単語</h2><p class="recent-caption">さいきんの3つ</p><div id="found-words" class="found-words"><p class="empty-state">見つけた単語がここに並ぶよ。</p></div></section>
         <section class="meaning-card" aria-label="正解した単語の意味">
           <div class="card-heading"><h2>ことばのメモ</h2><span>WORD NOTE</span></div>
           <div id="word-note" aria-live="polite"><p class="meaning-empty">見つけた単語の意味が、ここに表示されるよ。</p></div>
         </section>
-        <section class="found-card"><div class="card-heading"><h2>見つけたことば</h2><span>YOUR WORDS</span></div><div id="found-words" class="found-words"><p class="empty-state">まだ見つかっていない、<br>小さなことばが待っているよ。</p></div></section>
-        <button id="restart-button" class="restart-button"><span>↻</span> 新しくはじめる</button>
       </aside>
     </div>
-    <p class="footer-note">急がなくて、大丈夫。あなたのペースで見つけよう。<span>✦</span></p>
+
   </main>
   <dialog id="help-dialog"><button id="close-help" class="icon-button close" aria-label="遊び方を閉じる">×</button><span class="eyebrow">HOW TO PLAY</span><h2>なぞって、ことばを発見。</h2><ol><li>縦・横・斜めの一直線に文字をつなげます。L字など、途中では曲がれません。</li><li>3〜6文字の英単語を作り、指やマウスを離すと決定。</li><li>登録単語なら文字が消えて、上から新しい文字が落ちてきます。</li></ol><p>同じマスは1回の単語で1度だけ。直前の文字に戻ると1文字取り消せます。1文字につき10点、同じ単語も再び見つけられます。自動連鎖ONでは、落下・ランダム補充後、偶然新しくそろった身近な3〜4文字の単語が自動で消えます。単語になるよう狙って補充することはありません。2連鎖で2倍、3連鎖で3倍、最大4連鎖まで。最初からある単語は自動では消えません。</p><p>単語帳は3〜6文字の基本形を中心とした<span id="vocabulary-count">3,000</span>語です。複数形・過去形などの変化形は対象外です。すべての英単語に対応しているわけではありません。時間制限はありません。</p><p>操作せず15秒待つと、答えのブロックが番号順に軽く震えます。ヒントで自動消去や減点はありません。動きを減らす設定では、色と番号で案内します。見つけたことばを押すと、その意味をもう一度確認できます。訳の未整備語も正解ですが、意味は準備中と表示します。</p><p class="keyboard-help">キーボード：矢印で移動／スペースで選択／Enterで決定／Escで取り消し。</p></dialog>
 </body>

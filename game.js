@@ -105,6 +105,8 @@
       tile.className = `tile${'AEIOU'.includes(letter) ? ' vowel' : ''}`;
       tile.textContent = letter;
       tile.dataset.index = index;
+      // 見た目だけの色分け。文字と位置から決め、ゲーム用の乱数列には影響させない。
+      tile.dataset.color = (letter.charCodeAt(0) + index * 3) % 7;
       tile.setAttribute('aria-label', `${Math.floor(index / E.COLS) + 1}行${index % E.COLS + 1}列 ${letter}`);
       tile.tabIndex = index === 0 ? 0 : -1;
       if (!tutorialComplete && tutorialPath.includes(index)) {
@@ -205,10 +207,17 @@
         chip.dataset.word = match.word;
         chip.setAttribute('aria-label', `${match.word} の意味を確認`);
         chip.className = 'word-chip';
-        chip.textContent = chain > 1 ? `${match.word} ×${chain}` : match.word;
+        const chipWord = document.createElement('span');
+        chipWord.className = 'chip-word';
+        chipWord.lang = 'en';
+        chipWord.textContent = chain > 1 ? `${match.word} ×${chain}` : match.word;
+        const chipMeaning = document.createElement('span');
+        chipMeaning.className = 'chip-meaning';
+        chipMeaning.textContent = globalThis.WordPopDictionary[match.word] || '意味は準備中';
+        chip.append(chipWord, chipMeaning);
         if (found.length === 1) $('found-words').replaceChildren();
         $('found-words').prepend(chip);
-        while ($('found-words').children.length > 30) $('found-words').lastElementChild.remove();
+        while ($('found-words').children.length > 3) $('found-words').lastElementChild.remove();
         match = chainEnabled && chain <= E.MAX_CASCADES
           ? E.findCascade(before, result, easyWords) : null;
         if (match) chain++;
@@ -243,6 +252,13 @@
     empty.className = 'empty-state';
     empty.textContent = 'まだ見つかっていない、小さなことばが待っているよ。';
     $('found-words').replaceChildren(empty);
+    for (let rank = 0; rank < 3; rank++) {
+      const slot = document.createElement('div');
+      slot.className = 'empty-slot';
+      slot.setAttribute('aria-hidden', 'true');
+      slot.textContent = '—';
+      $('found-words').append(slot);
+    }
     const note = document.createElement('p');
     note.className = 'meaning-empty';
     note.textContent = '見つけた単語の意味が、ここに表示されるよ。';
