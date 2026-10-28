@@ -9,7 +9,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(await page.locator('.word-chip').count(),0);
  assert.equal(await page.evaluate(()=>document.fonts.check('650 20px Fredoka')),true);
  assert.equal(await page.locator('.tile').count(),56);
- assert.equal(await page.locator('.brand,.intro,h1').count(),0);
+ assert.equal(await page.locator('.brand,.intro').count(),0);assert.equal(await page.locator('h1').textContent(),'Word Pop!');
  assert.equal(await page.locator('.character-space').isVisible(),true);
  assert.ok(await page.locator('.tile').evaluateAll(ts=>new Set(ts.map(t=>t.dataset.color)).size)>=6);
  const board=await page.locator('#board').boundingBox(),recent=await page.locator('.found-card').boundingBox();assert.ok(recent.x>board.x+board.width);
@@ -24,10 +24,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await play(next);assert.equal(await page.locator('.word-chip').count(),3);assert.equal(await page.locator('#found-count').textContent(),'4');
  await page.locator('.word-chip').last().click();assert.equal(await page.locator('.word-chip').last().getAttribute('aria-pressed'),'true');
  assert.equal(await page.locator('.meaning-card,#word-note').count(),0);
- assert.ok((await page.locator('.chip-count').allTextContents()).every(t=>/発見 \d+回/.test(t)));
+ assert.ok((await page.locator('.chip-count').allTextContents()).every(t=>/^\d+回$/.test(t)));
  await page.waitForFunction(()=>document.getElementById('discovery-pop').hidden);
  fs.mkdirSync('/workspace/scratch/word-pop',{recursive:true});
  await page.screenshot({path:'/workspace/scratch/word-pop/pastel-desktop.png',fullPage:true});
  for(const width of [390,320]){await page.setViewportSize({width,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.equal(await page.locator('.tile').count(),56);await page.screenshot({path:`/workspace/scratch/word-pop/pastel-${width}.png`,fullPage:true});}
- assert.deepEqual(errors,[]);console.log('PASS: pastel layout / title removed / 7x8 / varied glossy tiles / right-hand translated recent three / eviction / history / mobile widths');
+ assert.deepEqual(errors,[]);console.log('PASS: pastel layout / game logo / 7x8 / varied glossy tiles / right-hand translated recent three / eviction / history / mobile widths');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

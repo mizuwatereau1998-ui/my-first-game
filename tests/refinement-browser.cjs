@@ -5,7 +5,7 @@ await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascrip
 await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await page.locator('#chain-toggle').uncheck();await page.waitForSelector('#pop-image img');
 async function play(p){for(const i of p){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}await page.keyboard.press('Enter');await page.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');}
 await play([16,17,18]);await play([35,36,37]);await play([49,50,51]);await play([46,47,48]);
-assert.deepEqual(await page.locator('.chip-word').allTextContents(),['SUN','DOG','CAT']);assert.deepEqual(await page.locator('.chip-count').allTextContents(),['発見 1回','発見 1回','発見 2回']);assert.equal(await page.locator('#score').textContent(),'120');assert.equal(await page.locator('#found-count').textContent(),'4');assert.equal(await page.locator('#word-note,.meaning-card').count(),0);
+assert.deepEqual(await page.locator('.chip-word').allTextContents(),['SUN','DOG','CAT']);assert.deepEqual(await page.locator('.chip-count').allTextContents(),['1回','1回','2回']);assert.equal(await page.locator('#score').textContent(),'120');assert.equal(await page.locator('#found-count').textContent(),'4');assert.equal(await page.locator('#word-note,.meaning-card').count(),0);
 const overlap=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
 for(const width of [1200,390,320]){
  await page.setViewportSize({width,height:1100});

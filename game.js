@@ -61,7 +61,7 @@
       const card = document.createElement('button');
       card.type = 'button'; card.className = 'word-chip'; card.dataset.word = word;
       card.setAttribute('aria-label', `${word}、${globalThis.WordPopDictionary[word] || '意味は準備中'}、発見${counts.get(word)}回`);
-      for (const [className, text] of [['chip-word',word],['chip-meaning',globalThis.WordPopDictionary[word] || '意味は準備中'],['chip-count',`発見 ${counts.get(word)}回`]]) {
+      for (const [className, text] of [['chip-word',word],['chip-meaning',globalThis.WordPopDictionary[word] || '意味は準備中'],['chip-count',`${counts.get(word)}回`]]) {
         const span = document.createElement('span');span.className = className;span.textContent = text;
         if (className === 'chip-word') span.lang = 'en';
         card.append(span);
@@ -114,7 +114,7 @@
       tile.setAttribute('aria-pressed', String(path.includes(index)));
     });
     const word = path.map(index => board[index]).join('');
-    $('word-preview').textContent = word || '文字をつなげよう';
+    $('word-preview').textContent = word || '選択した文字';
     $('word-preview').classList.toggle('active', !!word);
     $('word-length').textContent = `${path.length} / 6`;
     drawPath();

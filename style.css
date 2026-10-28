@@ -1287,6 +1287,71 @@ dialog p,dialog li {
   75% { transform:translateX(-50%) rotate(-4deg) scale(.97); }
   100% { transform:translateX(-50%) rotate(-3deg) scale(1); }
 }
+
+/* プレイ画面のヘッダーと記録。ブロック・キャラクター・演出は従来のまま。 */
+.play-header { padding-top:4px;row-gap:14px;grid-template-rows:auto minmax(122px,auto); }
+.game-brand { grid-column:1/-1;grid-row:1;justify-self:center;text-align:center; }
+.game-logo {
+  margin:0;font-family:var(--game-font);font-size:54px;font-weight:900;line-height:1.1;
+  letter-spacing:-1.5px;color:#f16ab1;-webkit-text-stroke:5px #fff9e9;paint-order:stroke fill;
+  text-shadow:0 4px 0 #b96e9e,0 6px 4px #427a9b35;
+}
+.game-logo>span:last-child { color:#35b9ed;text-shadow:0 4px 0 #3484b4,0 6px 4px #427a9b35; }
+.game-logo .logo-bang { color:#ffd15a;text-shadow:0 4px 0 #c9903e; }
+.game-tagline {
+  display:inline-block;margin:8px 0 0;padding:4px 20px;color:#fff;font-size:12px;font-weight:800;line-height:1.4;
+  background:linear-gradient(#67c7ed,#3e9dcd);text-shadow:0 1px #2773a1;
+  clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);
+}
+.score-card { grid-column:1;grid-row:2; }
+.play-controls { grid-row:2; }
+.play-hud .available-count {
+  grid-column:1/-1;justify-self:end;margin:0;color:#effbff;font-size:11px;line-height:1.4;font-weight:650;
+}
+/* 通常の重複メッセージは読み上げに残し、不正解の案内だけ画面にも出す。 */
+.feedback-row,.found-words>.empty-state {
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;min-height:0;
+}
+.feedback-row:has(#feedback.error) {
+  position:static;width:auto;height:auto;margin:10px 0 0;overflow:visible;clip-path:none;
+  white-space:normal;min-height:0;font-size:12px;text-align:center;
+}
+.found-card h2 { margin:0 0 18px;font-size:22px;letter-spacing:.5px; }
+.found-words { grid-template-columns:minmax(0,1fr);gap:12px; }
+.word-chip {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;
+  align-content:center;align-items:center;column-gap:8px;row-gap:4px;
+  min-height:94px;padding:14px 10px 14px 17px;text-align:left;border-radius:20px;
+  background:linear-gradient(90deg,#a4def1 0 4px,transparent 4px),radial-gradient(ellipse at 40% 0%,#fff,transparent 65%),linear-gradient(#fffcf0,#fff3d6);
+}
+.chip-word { grid-column:1;grid-row:1;font-size:26px;line-height:1.15;letter-spacing:0;color:#145891; }
+.chip-meaning { grid-column:1;grid-row:2;margin:0;font-size:13px;line-height:1.5; }
+.chip-count {
+  grid-column:2;grid-row:1/3;justify-self:end;margin:0;padding:3px 6px;border-radius:10px;
+  font-size:11px;line-height:1.5;color:#326b8c;background:#e1f4fb;font-weight:750;white-space:nowrap;
+}
+.empty-slot { min-height:94px;border-radius:20px; }
+@media(min-width:701px) and (max-width:900px) {
+  .play-header { grid-template-columns:110px minmax(0,1fr) 200px; }
+  .score-card { padding:9px 6px 10px; }
+  .score-heading { font-size:14px; }
+  .score>span { font-size:36px; }
+  .word-count { font-size:10px; }
+}
+@media(max-width:700px) {
+  .play-header { padding-top:0;row-gap:8px; }
+  .game-logo { font-size:44px;-webkit-text-stroke-width:4px; }
+  .game-tagline { font-size:11px;margin-top:6px;padding:3px 18px; }
+  .play-controls .icon-button,.restart-button,.chain-option { min-height:44px; }
+  .found-card { padding:18px 12px 15px; }
+  .found-card h2 { font-size:22px;margin-bottom:14px; }
+  .word-chip { min-height:84px;padding:13px 14px 13px 20px;column-gap:12px; }
+  .chip-word { font-size:27px; }
+  .chip-meaning { font-size:13px; }
+  .chip-count { font-size:12px;padding:4px 8px; }
+  .empty-slot { min-height:70px; }
+}
 @media(prefers-reduced-motion:reduce) {
   .tile.selected,.tile.popping,.tile.falling,.chain-banner.chain-bounce { animation:none;transform:none; }
   .tile.popping { opacity:.3; }
