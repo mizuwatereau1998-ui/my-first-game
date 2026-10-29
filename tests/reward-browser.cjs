@@ -9,7 +9,7 @@ const fs = require('node:fs'), path = require('node:path');
   page.on('pageerror',e=>errors.push(e.message));
   await page.clock.install();
   const engine=fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8');
-  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+  await page.route('**/engine.js*',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(15,6,...'AFFORD');b.splice(35,3,...'CAT');b.splice(49,3,...'DOG');return b;};
   `}));
   const url=process.env.GAME_URL||'http://127.0.0.1:8000';
@@ -66,7 +66,7 @@ const fs = require('node:fs'), path = require('node:path');
   }
   // 訳が未整備の登録語でも表示と得点を維持。
   const untranslated=await page.evaluate(()=>[...WordPopWords].find(w=>w.length===6&&!WordPopDictionary[w]));
-  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+  await page.route('**/engine.js*',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(15,6,...${JSON.stringify(untranslated)});return b;};
   `}));
   await page.emulateMedia({reducedMotion:'reduce'});await page.goto(url);await dismissStartHelp(page, true);

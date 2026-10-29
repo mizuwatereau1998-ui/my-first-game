@@ -71,7 +71,7 @@ const path=require('node:path');
  assert.equal(await page.locator('.word-chip').count(),0);
  assert.equal(await page.locator('#score').textContent(),'0');
  // 意味未整備でも登録語は正解。訳を捏造せず準備中を表示。
- await page.route('**/engine.js',route=>route.fulfill({contentType:'application/javascript',body:
+ await page.route('**/engine.js*',route=>route.fulfill({contentType:'application/javascript',body:
   fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,5,...'ATLAS');return b;};`}));
  await page.reload();await dismissStartHelp(page, true);await require('./set-test-cascades.cjs')(page);
  await keyboardWord(16,5);

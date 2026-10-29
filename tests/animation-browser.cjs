@@ -13,7 +13,7 @@ const path = require('node:path');
     page.on('pageerror', e => errors.push(e.message));
     await page.clock.install();
     const engine = fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8');
-    await page.route('**/engine.js', r => r.fulfill({contentType:'application/javascript',body:engine + `
+    await page.route('**/engine.js*', r => r.fulfill({contentType:'application/javascript',body:engine + `
       WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,3,...'CAT');return b;};
     `}));
     const url = process.env.GAME_URL || 'http://127.0.0.1:8000';
@@ -94,7 +94,7 @@ const path = require('node:path');
     assert.equal(await page.locator('.tile-effects').count(),0);
     assert.equal(await page.locator('#score').textContent(),'0');
     // 4連鎖の上限と表示の段階。実ゲームの候補判定はNode/既存ブラウザテストで検証。
-    await page.route('**/engine.js', r=>r.fulfill({contentType:'application/javascript',body:engine+`
+    await page.route('**/engine.js*', r=>r.fulfill({contentType:'application/javascript',body:engine+`
       WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');for(const i of [0,16,35,49])b.splice(i,3,...'CAT');return b;};
       window.cascadeCalls=0;
       WordPopEngine.findCascade=(before,result)=>{cascadeCalls++;const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return {word:p.map(i=>result.board[i]).join(''),path:p};};

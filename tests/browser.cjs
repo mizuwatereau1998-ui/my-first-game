@@ -116,7 +116,7 @@ const fs = require('node:fs');
   const chainPage=await chainContext.newPage();
   chainPage.on('pageerror',e=>errors.push(e.message));
   // 実際の消去・落下によって中央にCATが成立する固定盤面。
-  await chainPage.route('**/engine.js', route=>route.fulfill({
+  await chainPage.route('**/engine.js*', route=>route.fulfill({
     contentType:'application/javascript',
     body:fs.readFileSync(require('node:path').resolve(__dirname,'../engine.js'),'utf8') + `
       WordPopEngine.createBoard=()=>{

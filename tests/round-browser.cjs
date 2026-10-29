@@ -53,7 +53,7 @@ const dismissHelp=require('./dismiss-start-help.cjs');
   assert.equal(await page.locator('#time-left').textContent(),'1:30');
   assert.equal(await page.locator('#help-dialog').isVisible(),false);
   // 実操作による重複集計と、確定結果の整合。
-  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+  await page.route('**/engine.js*',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,3,...'CAT');b.splice(35,3,...'CAT');return b;};
   `}));
   await load();await dismissHelp(page,true);await require('./set-test-cascades.cjs')(page);
@@ -82,9 +82,9 @@ const dismissHelp=require('./dismiss-start-help.cjs');
    assert.equal(await page.locator('#result-score').textContent(),'0');assert.equal(await page.locator('#result-chain').textContent(),'0');
   }
   // 消去前・落下中・連鎖予告中の時間切れでも古い加算を残さない。
-  await page.route('**/game.js',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 30','const ROUND_SECONDS = 2')}));
+  await page.route('**/game.js*',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 30','const ROUND_SECONDS = 2')}));
   for(const wait of [1800,1600]) {
-   if(wait===0)await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+   if(wait===0)await page.route('**/engine.js*',r=>r.fulfill({contentType:'application/javascript',body:engine+`
     WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');for(const i of [0,16,35,49])b.splice(i,3,...'CAT');return b;};
     WordPopEngine.findCascade=(before,result)=>{const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return {word:p.map(i=>result.board[i]).join(''),path:p};};
    `}));
@@ -103,15 +103,15 @@ const dismissHelp=require('./dismiss-start-help.cjs');
    assert.equal(await page.locator('.tile-effects,.tile.popping,.tile.falling').count(),0);
   }
   // 1秒制で、古い連鎖待ちの期限がリトライ直後に来る境界も検証する。
-  await page.route('**/game.js',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 30','const ROUND_SECONDS = 1')}));
+  await page.route('**/game.js*',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 30','const ROUND_SECONDS = 1')}));
   await load();await dismissHelp(page,true);await require('./set-test-cascades.cjs')(page);await enter([16,17,18]);
   await page.clock.runFor(1000);await page.clock.runFor(600);
   await page.locator('#retry-button').click();await require('./set-test-cascades.cjs')(page);await enter([16,17,18]);
   await page.clock.runFor(300);assert.equal(await page.locator('#board').getAttribute('aria-busy'),'true');
   assert.equal(await page.locator('#score').textContent(),'0');
   await page.clock.runFor(320);assert.equal(await page.locator('#score').textContent(),'30');
-  await page.unroute('**/game.js');
-  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+  await page.unroute('**/game.js*');
+  await page.route('**/engine.js*',r=>r.fulfill({contentType:'application/javascript',body:engine+`
     WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');for(const i of [0,16,35,49])b.splice(i,3,...'CAT');return b;};
     WordPopEngine.findCascade=(before,result)=>{const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return p?{word:p.map(i=>result.board[i]).join(''),path:p}:null;};
   `}));
@@ -121,8 +121,8 @@ const dismissHelp=require('./dismiss-start-help.cjs');
   await page.clock.runFor(90000);await page.clock.runFor(600);
   assert.equal(await page.locator('#result-chain').textContent(),'4');
   assert.equal(await page.locator('#result-score').textContent(),'300');
-  await page.unroute('**/engine.js');
-  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+  await page.unroute('**/engine.js*');
+  await page.route('**/engine.js*',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');['APPLE','ORANGE','BANANA','WINTER','SCHOOL','RABBIT','TURTLE','MONKEY'].forEach((w,n)=>b.splice(n*7,w.length,...w));b[6]='C';b[13]='A';b[20]='T';return b;};
   `}));
   await load();await dismissHelp(page,true);await require('./set-test-cascades.cjs')(page);
