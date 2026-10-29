@@ -1,0 +1,23 @@
+const{chromium}=require('playwright'),assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});try{
+const context=await browser.newContext({viewport:{width:1200,height:900}});
+await context.addInitScript(()=>{window.soundStats={contexts:0,notes:0,started:0};const Native=window.AudioContext;window.AudioContext=class extends Native{constructor(...args){super(...args);soundStats.contexts++;window.liveAudio=this;const make=this.createOscillator.bind(this);this.createOscillator=()=>{const oscillator=make();soundStats.notes++;const start=oscillator.start.bind(oscillator);oscillator.start=(time)=>{soundStats.started++;return start(time);};return oscillator;};}};});
+const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));const url=process.env.GAME_URL||'http://127.0.0.1:8000';await page.goto(url);
+assert.equal(await page.evaluate(()=>soundStats.contexts),0);assert.match(await page.locator('.sound-warning').textContent(),/音が鳴ります/);assert.equal(await page.locator('#bgm-toggle').isChecked(),true);assert.equal(await page.locator('#sfx-toggle').isChecked(),true);
+await page.locator('#close-help').click();await page.waitForFunction(()=>window.liveAudio?.state==='running'&&soundStats.started>0);assert.equal(await page.evaluate(()=>soundStats.contexts),1);
+await page.locator('#audio-button').click();const time=await page.locator('#time-left').textContent();await page.locator('#sfx-toggle').check();
+await page.evaluate(()=>{window.soundEvents=[];const old=WordPopAudio.sfx;WordPopAudio.sfx=name=>{soundEvents.push(name);old(name);};});
+await page.locator('#close-audio').click();for(const i of [16,17,18]){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}await page.keyboard.press('Enter');await page.waitForFunction(()=>document.getElementById('score').textContent!=='0');
+assert.ok(await page.evaluate(()=>soundEvents.includes('select')&&soundEvents.includes('correct')&&soundEvents.includes('fall')));
+await page.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');await page.locator('#audio-button').click();await page.locator('#bgm-toggle').uncheck();assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('word-pop-sound-v1'))),{bgm:false,sfx:true});
+await page.reload();assert.equal(await page.locator('#bgm-toggle').isChecked(),false);assert.equal(await page.locator('#sfx-toggle').isChecked(),true);assert.equal(await page.evaluate(()=>soundStats.contexts),0);
+await page.locator('#close-help').click();await page.locator('#audio-button').click();await page.locator('#bgm-toggle').check();await page.locator('#bgm-toggle').uncheck();await page.locator('#bgm-toggle').check();assert.equal(await page.evaluate(()=>soundStats.contexts),1);
+// 非表示中は新しい音を生成せず、再表示後に再開できる。
+await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});const notes=await page.evaluate(()=>soundStats.notes);await page.evaluate(()=>{WordPopAudio.sfx('chain3');WordPopAudio.sfx('select');});assert.equal(await page.evaluate(()=>soundStats.notes),notes);
+await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+for(const name of ['button','correct','chain2','chain3','fall'])await page.evaluate(name=>WordPopAudio.sfx(name),name);
+assert.equal(await page.evaluate(()=>soundStats.contexts),1);
+await page.screenshot({path:'/workspace/scratch/word-pop/audio-settings.png',fullPage:true});assert.deepEqual(errors,[]);
+const silent=await browser.newContext();await silent.addInitScript(()=>{window.AudioContext=undefined;window.webkitAudioContext=undefined;});const noAudio=await silent.newPage();const unsupportedErrors=[];noAudio.on('pageerror',e=>unsupportedErrors.push(e.message));await noAudio.goto(url);await noAudio.locator('#close-help').click();await noAudio.locator('#audio-button').click();assert.equal(await noAudio.locator('#bgm-toggle').isDisabled(),true);assert.match(await noAudio.locator('#audio-status').textContent(),/非対応/);await noAudio.locator('#close-audio').click();assert.equal(await noAudio.locator('.tile').count(),56);assert.deepEqual(unsupportedErrors,[]);
+console.log('PASS: BGM default on with warning / gesture-only AudioContext / real Web Audio notes / select-correct-fall events / individual persisted settings / one context across rapid toggles / hidden mute / no-audio fallback');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

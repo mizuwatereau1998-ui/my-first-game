@@ -12,7 +12,7 @@ const fs = require('node:fs');
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(process.env.GAME_URL || 'http://127.0.0.1:8000');await dismissStartHelp(page, false);
     await page.waitForSelector('.tile');
-    await page.locator('#chain-toggle').uncheck();
+    await require('./set-test-cascades.cjs')(page);
     return {context,page};
   }
   async function center(page,i){const b=await page.locator('.tile').nth(i).boundingBox();return {x:b.x+b.width/2,y:b.y+b.height/2};}
@@ -67,7 +67,7 @@ const fs = require('node:fs');
   await page.waitForFunction(()=>document.getElementById('score').textContent==='30');
   // 別の新規ページで、縦の BOOK を実際になぞる。
   const vertical=await context.newPage(); await vertical.goto('http://127.0.0.1:8000');await dismissStartHelp(vertical, false);
-  await vertical.locator('#chain-toggle').uncheck();
+  await require('./set-test-cascades.cjs')(vertical);
   await drag(vertical,[0,7,14,21]);
   await vertical.waitForFunction(()=>document.getElementById('score').textContent==='40');
   assert.equal(await vertical.locator('#found-words .chip-word').textContent(),'BOOK');
@@ -127,7 +127,7 @@ const fs = require('node:fs');
   await drag(chainPage,[21,22,23]);
   await chainPage.locator('.chain-ready').first().waitFor();
   assert.equal(await chainPage.locator('#restart-button').isDisabled(),true);
-  assert.equal(await chainPage.locator('#chain-toggle').isDisabled(),true);
+  assert.equal(await chainPage.locator('#shuffle-button').isDisabled(),true);
   assert.match(await chainPage.locator('#chain-banner').textContent(),/2 CHAIN!/);
   const highlighted=await chainPage.locator('.chain-ready').evaluateAll(tiles=>tiles.map(t=>Number(t.dataset.index)));
   assert.deepEqual(highlighted,[23,24,25]);

@@ -145,5 +145,26 @@
     return candidates.sort((a,b) => centrality(a) - centrality(b))[0] || null;
   }
 
-  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, refillLongWords, findCascade, MAX_CASCADES };
+  function shuffleBoard(board, longWords, easyWords, random = Math.random) {
+    let best = null, bestValue = -1;
+    for (let attempt = 0; attempt < 32; attempt++) {
+      const candidate = [...board];
+      for (let n = candidate.length - 1; n > 0; n--) {
+        const j = Math.floor(random() * (n + 1));
+        [candidate[n], candidate[j]] = [candidate[j], candidate[n]];
+      }
+      if (candidate.every((letter,n) => letter === board[n])) continue;
+      const shortCount = new Set(straightWords(candidate, easyWords).map(m=>m.word)).size;
+      const longCount = new Set(straightWords(candidate, longWords).map(m=>m.word)).size;
+      if (!shortCount && !longCount) continue;
+      const value = longCount * 10 + shortCount;
+      if (value > bestValue) { best = candidate; bestValue = value; }
+    }
+    if (best) return best;
+    // 回転は一直線の経路を維持し、文字の追加・削除も行わない有限の救済。
+    const rotated = [...board].reverse();
+    return rotated.some((letter,n)=>letter!==board[n]) &&
+      (findWord(rotated, longWords) || findWord(rotated, easyWords)) ? rotated : null;
+  }
+  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, refillLongWords, findCascade, MAX_CASCADES, shuffleBoard };
 })();

@@ -9,7 +9,7 @@ const fs=require('node:fs');
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, false);
   await page.evaluate(()=>document.fonts.ready);await page.waitForSelector('#pop-image img');
-  await page.locator('#chain-toggle').uncheck();
+  await require('./set-test-cascades.cjs')(page);
   async function play(indices) {
    for(const i of indices){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}
    await page.keyboard.press('Enter');await page.waitForFunction(()=>document.getElementById('board').getAttribute('aria-busy')==='false');
@@ -40,12 +40,12 @@ const fs=require('node:fs');
     const char=await page.locator('#pop-image').boundingBox();
     const face=[{x:char.x+char.width*.30,y:char.y+char.height*.22,width:char.width*.34,height:char.height*.24},
      {x:char.x+char.width*.19,y:char.y+char.height*.48,width:char.width*.62,height:char.height*.36}];
-    for(const selector of ['.game-brand','.score-card','#help-button','#restart-button','.chain-option']) {
+    for(const selector of ['.game-brand','.score-card','#help-button','#restart-button','#shuffle-button']) {
      const r=await page.locator(selector).boundingBox();
      for(const f of face)assert.equal(overlap(f,r),false,`${width} ${state}: character overlaps ${selector}`);
     }
    }
-   for(const selector of ['#help-button','#restart-button','.chain-option'])assert.ok((await page.locator(selector).boundingBox()).height>=44);
+   for(const selector of ['#help-button','#restart-button','#shuffle-button'])assert.ok((await page.locator(selector).boundingBox()).height>=44);
    for(const card of await page.locator('.word-chip').all()) {
     const word=await card.locator('.chip-word').boundingBox(),count=await card.locator('.chip-count').boundingBox();
     assert.ok(count.x>=word.x+word.width,`${width}: count must stay on the right`);
@@ -61,7 +61,7 @@ const fs=require('node:fs');
   await page.locator('#help-button').click();assert.equal(await page.locator('#help-dialog').isVisible(),true);
   assert.match(await page.locator('#help-dialog').textContent(),/一直線/);
   await page.locator('#close-help').click();
-  await page.locator('#chain-toggle').check();assert.equal(await page.locator('#chain-toggle').isChecked(),true);
+  await require('./set-test-cascades.cjs')(page,true);assert.equal(await page.locator('#chain-toggle').count(),0);
   page.once('dialog',d=>d.accept());await page.locator('#restart-button').click();
   assert.equal(await page.locator('#score').textContent(),'0');assert.equal(await page.locator('.word-chip').count(),0);
   assert.deepEqual(errors,[]);

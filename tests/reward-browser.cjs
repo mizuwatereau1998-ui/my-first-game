@@ -30,7 +30,7 @@ const fs = require('node:fs'), path = require('node:path');
   for(const width of [1200,390,320]) {
    await page.setViewportSize({width,height:1100});await page.goto(url);await dismissStartHelp(page, true);
    await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
-   await page.locator('#chain-toggle').uncheck();
+   await require('./set-test-cascades.cjs')(page);
    await enter([15,16,17,18,19,20]);
    await page.clock.runFor(240);
    assert.equal(await page.locator('#discovery-pop').isVisible(),false);
@@ -70,7 +70,7 @@ const fs = require('node:fs'), path = require('node:path');
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(15,6,...${JSON.stringify(untranslated)});return b;};
   `}));
   await page.emulateMedia({reducedMotion:'reduce'});await page.goto(url);await dismissStartHelp(page, true);
-  await page.locator('#chain-toggle').uncheck();await enter([15,16,17,18,19,20]);await page.clock.runFor(620);
+  await require('./set-test-cascades.cjs')(page);await enter([15,16,17,18,19,20]);await page.clock.runFor(620);
   assert.equal(await page.locator('#discovery-meaning').textContent(),'意味は準備中');
   assert.equal(await page.locator('#discovery-score').textContent(),'+60 pt');
   for(const selector of ['.discovery-burst','#discovery-word','#discovery-meaning','#discovery-score']) {

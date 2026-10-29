@@ -3,10 +3,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});try{
  const context=await browser.newContext({viewport:{width:1200,height:1100}});await context.addInitScript(()=>localStorage.setItem('word-pop-tutorial-complete-v1','true'));
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.clock.install();await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, true);await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
- await page.locator('#chain-toggle').uncheck();
+ await require('./set-test-cascades.cjs')(page);
  await page.clock.runFor(15000);assert.equal(await page.locator('.idle-hint').count(),5);
- await page.locator('#chain-toggle').check();await page.clock.runFor(15000);assert.equal(await page.locator('.idle-hint').count(),6);
- await page.locator('#chain-toggle').uncheck();
+ await require('./set-test-cascades.cjs')(page,true);await page.clock.runFor(15000);assert.equal(await page.locator('.idle-hint').count(),6);
+ await require('./set-test-cascades.cjs')(page);
  let expectedScore=0;
  for(const length of [5,6,6,5,6,6]){
   const match=await page.evaluate(n=>WordPopEngine.straightWords(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopLongWords).find(m=>m.word.length===n),length);

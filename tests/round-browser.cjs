@@ -17,7 +17,7 @@ const dismissHelp=require('./dismiss-start-help.cjs');
   assert.equal(await page.locator('#help-dialog').isVisible(),true);
   assert.equal(await page.locator('#help-progress').textContent(),'1 / 3');
   assert.equal(await page.locator('.help-page:visible').count(),1);
-  await page.clock.runFor(180000);assert.equal(await page.locator('#time-left').textContent(),'1:30');
+  await page.clock.runFor(180000);assert.equal(await page.locator('#time-left').textContent(),'0:30');
   await page.locator('.tile').nth(16).dispatchEvent('keydown',{key:' '});
   assert.equal(await page.locator('.tile.selected').count(),0);
   await dismissHelp(page,true);await page.clock.runFor(1000);
@@ -56,7 +56,7 @@ const dismissHelp=require('./dismiss-start-help.cjs');
   await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,3,...'CAT');b.splice(35,3,...'CAT');return b;};
   `}));
-  await load();await dismissHelp(page,true);await page.locator('#chain-toggle').uncheck();
+  await load();await dismissHelp(page,true);await require('./set-test-cascades.cjs')(page);
   for(const indices of [[16,17,18],[35,36,37]]){await enter(indices);await page.clock.runFor(620);}
   await page.clock.runFor(80000);
   assert.equal(await page.locator('.time-warning').count(),1);
@@ -82,13 +82,13 @@ const dismissHelp=require('./dismiss-start-help.cjs');
    assert.equal(await page.locator('#result-score').textContent(),'0');assert.equal(await page.locator('#result-chain').textContent(),'0');
   }
   // 消去前・落下中・連鎖予告中の時間切れでも古い加算を残さない。
-  await page.route('**/game.js',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 90','const ROUND_SECONDS = 2')}));
-  for(const wait of [1800,1600,0]) {
+  await page.route('**/game.js',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 30','const ROUND_SECONDS = 2')}));
+  for(const wait of [1800,1600]) {
    if(wait===0)await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
     WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');for(const i of [0,16,35,49])b.splice(i,3,...'CAT');return b;};
     WordPopEngine.findCascade=(before,result)=>{const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return {word:p.map(i=>result.board[i]).join(''),path:p};};
    `}));
-   await load();await dismissHelp(page,true);if(wait)await page.locator('#chain-toggle').uncheck();
+   await load();await dismissHelp(page,true);if(wait)await require('./set-test-cascades.cjs')(page);
    await page.clock.runFor(wait);await enter([16,17,18]);await page.clock.runFor(2000-wait);
    assert.equal(await page.locator('#timeup-toast').isVisible(),true);
    assert.equal(await page.locator('#result-dialog').isVisible(),false);
@@ -103,14 +103,18 @@ const dismissHelp=require('./dismiss-start-help.cjs');
    assert.equal(await page.locator('.tile-effects,.tile.popping,.tile.falling').count(),0);
   }
   // 1秒制で、古い連鎖待ちの期限がリトライ直後に来る境界も検証する。
-  await page.route('**/game.js',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 90','const ROUND_SECONDS = 1')}));
-  await load();await dismissHelp(page,true);await enter([16,17,18]);
+  await page.route('**/game.js',r=>r.fulfill({contentType:'application/javascript',body:game.replace('const ROUND_SECONDS = 30','const ROUND_SECONDS = 1')}));
+  await load();await dismissHelp(page,true);await require('./set-test-cascades.cjs')(page);await enter([16,17,18]);
   await page.clock.runFor(1000);await page.clock.runFor(600);
-  await page.locator('#retry-button').click();await enter([16,17,18]);
+  await page.locator('#retry-button').click();await require('./set-test-cascades.cjs')(page);await enter([16,17,18]);
   await page.clock.runFor(300);assert.equal(await page.locator('#board').getAttribute('aria-busy'),'true');
   assert.equal(await page.locator('#score').textContent(),'0');
   await page.clock.runFor(320);assert.equal(await page.locator('#score').textContent(),'30');
   await page.unroute('**/game.js');
+  await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
+    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');for(const i of [0,16,35,49])b.splice(i,3,...'CAT');return b;};
+    WordPopEngine.findCascade=(before,result)=>{const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return p?{word:p.map(i=>result.board[i]).join(''),path:p}:null;};
+  `}));
   // 確定した最大4連鎖と倍率得点が結果へ引き継がれる。
   await load();await dismissHelp(page,true);await enter([16,17,18]);await page.clock.runFor(6380);
   assert.equal(await page.locator('#found-count').textContent(),'4');
@@ -121,7 +125,7 @@ const dismissHelp=require('./dismiss-start-help.cjs');
   await page.route('**/engine.js',r=>r.fulfill({contentType:'application/javascript',body:engine+`
    WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');['APPLE','ORANGE','BANANA','WINTER','SCHOOL','RABBIT','TURTLE','MONKEY'].forEach((w,n)=>b.splice(n*7,w.length,...w));b[6]='C';b[13]='A';b[20]='T';return b;};
   `}));
-  await load();await dismissHelp(page,true);await page.locator('#chain-toggle').uncheck();
+  await load();await dismissHelp(page,true);await require('./set-test-cascades.cjs')(page);
   for(const [n,w] of ['APPLE','ORANGE','BANANA','WINTER','SCHOOL','RABBIT','TURTLE','MONKEY'].entries()){
    await enter(Array.from({length:w.length},(_,i)=>n*7+i));await page.clock.runFor(620);
    assert.equal(await page.locator('#found-count').textContent(),String(n+1),w);

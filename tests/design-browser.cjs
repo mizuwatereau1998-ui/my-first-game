@@ -3,7 +3,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});try{
  const context=await browser.newContext({viewport:{width:1222,height:1287}}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, false);
- await page.locator('#chain-toggle').uncheck();
+ await require('./set-test-cascades.cjs')(page);
  await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.locator('.score-heading').textContent(),'SCORE');
  assert.equal(await page.locator('.found-card h2').textContent(),'RECENT WORDS');
@@ -22,7 +22,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  const mascot=await page.locator('.has-pop-image #pop-image, .character-space:not(.has-pop-image) .mascot').boundingBox(),frame=await page.locator('#board').boundingBox();
  assert.ok(mascot.y<frame.y && mascot.y+mascot.height>=frame.y-20);
  const next=await page.evaluate(()=>WordPopEngine.findWord(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopEasyWords));
- await play(next);assert.equal(await page.locator('.word-chip').count(),3);assert.equal(await page.locator('#found-count').textContent(),'4');
+ await play(next);assert.equal(await page.locator('.word-chip').count(),4);assert.equal(await page.locator('#found-count').textContent(),'4');
  await page.locator('.word-chip').last().click();assert.equal(await page.locator('.word-chip').last().getAttribute('aria-pressed'),'true');
  assert.equal(await page.locator('.meaning-card,#word-note').count(),0);
  assert.ok((await page.locator('.chip-count').allTextContents()).every(t=>/^\d+回$/.test(t)));

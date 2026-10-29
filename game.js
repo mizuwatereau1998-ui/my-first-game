@@ -11,12 +11,16 @@
   let board, path = [], score = 0, found = [], busy = false, pointerId = null, lastPoint = null;
   let tutorialComplete = false;
   try { tutorialComplete = localStorage.getItem(storageKey) === 'true'; } catch { /* 保存不可でも遊べます。 */ }
-  const ROUND_SECONDS = 90; // 1プレイの制限時間。ここだけ変えれば表示も追従する。
+  const ROUND_SECONDS = 30; // 1プレイの制限時間。ここだけ変えれば表示も追従する。
+  let selectedSeconds = ROUND_SECONDS, cascadePaused = false;
   let phase = 'intro', remainingMs = ROUND_SECONDS * 1000, deadline = null;
   let clockTimer = null, resultTimer = null, roundId = 0, maxChain = 0;
   const pendingDelays = new Map();
   function updateClock() {
     const seconds = Math.ceil(remainingMs / 1000);
+    $('time-left').parentElement.classList.toggle('time-paused', cascadePaused && phase === 'playing');
+    $('chain-clock-note').hidden = !cascadePaused || phase !== 'playing';
+    $('shuffle-button').disabled = phase !== 'playing' || busy || score < 100 || document.hidden || $('help-dialog').open || $('audio-dialog').open;
     $('time-left').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
     $('time-left').parentElement.classList.toggle('time-warning', seconds > 0 && seconds <= 10);
   }
@@ -28,7 +32,7 @@
     if (phase === 'playing' && remainingMs === 0) finishRound();
   }
   function resumeClock() {
-    if (phase !== 'playing' || document.hidden || $('help-dialog').open || deadline !== null) return;
+    if (phase !== 'playing' || cascadePaused || document.hidden || $('help-dialog').open || $('audio-dialog').open || deadline !== null) return;
     deadline = performance.now() + remainingMs;
     function tick() {
       remainingMs = Math.max(0, deadline - performance.now());
@@ -47,10 +51,10 @@
     if (phase === 'playing' && deadline !== null && performance.now() >= deadline) finishRound();
     return id === roundId && phase === 'playing';
   }
-  function canInteract() { return roundActive(roundId) && !$('help-dialog').open && !document.hidden; }
+  function canInteract() { return roundActive(roundId) && !$('help-dialog').open && !$('audio-dialog').open && !document.hidden; }
   function finishRound() {
     if (phase !== 'playing') return;
-    phase = 'timeup';
+    phase = 'timeup'; cascadePaused = false;
     pauseClock(); remainingMs = 0; updateClock(); invalidateRound();
     clearIdleHint(); hideDiscovery(); globalThis.WordPopMotion?.clear();
     releasePointer(); path = []; busy = false;
@@ -58,7 +62,7 @@
     $('chain-banner').hidden = true;
     boardElement.setAttribute('aria-busy', 'false');
     boardElement.setAttribute('aria-disabled', 'true');
-    for (const id of ['submit-button','restart-button','chain-toggle','help-button']) $(id).disabled = true;
+    for (const id of ['submit-button','restart-button','shuffle-button','help-button']) $(id).disabled = true;
     globalThis.WordPopCharacter?.reset();
     $('result-score').textContent = score;
     $('result-count').textContent = found.length;
@@ -100,10 +104,10 @@
   }
   function scheduleIdleHint() {
     clearIdleHint();
-    if (phase !== 'playing' || busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open) return;
+    if (phase !== 'playing' || busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open || $('audio-dialog').open) return;
     hintTimer = setTimeout(() => {
       hintTimer = null;
-      if (phase !== 'playing' || busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open) return;
+      if (phase !== 'playing' || busy || path.length || pointerId !== null || document.hidden || $('help-dialog').open || $('audio-dialog').open) return;
       const longMatches = E.straightWords(board, longWords);
       const longMatch = longMatches.find(match => match.word.length !== lastLongHintLength) || longMatches[0];
       const answer = !tutorialComplete ? tutorialPath :
@@ -129,7 +133,7 @@
   function renderRecentWords() {
     const counts = new Map();
     for (const word of found) counts.set(word, (counts.get(word) || 0) + 1);
-    const recent = [...new Set([...found].reverse())].slice(0, 3);
+    const recent = [...new Set([...found].reverse())];
     $('found-words').replaceChildren();
     for (const word of recent) {
       const card = document.createElement('button');
@@ -230,7 +234,9 @@
     if (busy || !canInteract()) return;
     clearIdleHint();
     hideDiscovery();
-    path = E.extendPath(path, index);
+    const nextPath = E.extendPath(path, index);
+    if (nextPath !== path) globalThis.WordPopAudio?.sfx('select');
+    path = nextPath;
     updateSelection();
   }
   function indexAt(x, y) {
@@ -279,8 +285,7 @@
     $('chain-banner').hidden = true;
     $('hint-line').setAttribute('points', '');
     $('selected-line').setAttribute('points', '');
-    const chainEnabled = $('chain-toggle').checked;
-    $('chain-toggle').disabled = true;
+    $('shuffle-button').disabled = true;
     let match = {word, path: selected}, chain = 1;
     try {
       while (match) {
@@ -301,6 +306,7 @@
           message(`${match.word}！ +${earned} pt`);
         }
         globalThis.WordPopCharacter?.react(chain);
+        globalThis.WordPopAudio?.sfx(chain >= 3 ? 'chain3' : chain === 2 ? 'chain2' : 'correct');
         globalThis.WordPopMotion?.burst(match.path, chain);
         match.path.forEach((index, order) => {
           const tile = tiles.children[index];
@@ -316,6 +322,7 @@
         if (!await delay(380, activeRound)) return;
         [...tiles.children].forEach(tile => tile.classList.remove('falling'));
         if (!roundActive(activeRound)) return;
+        globalThis.WordPopAudio?.sfx('fall');
         maxChain = Math.max(maxChain, chain);
         score += earned;
         found.push(match.word);
@@ -323,9 +330,12 @@
         $('found-count').textContent = found.length;
         renderRecentWords();
         showDiscovery(match.word, chain, earned);
-        match = chainEnabled && chain <= E.MAX_CASCADES
+        match = chain <= E.MAX_CASCADES
           ? E.findCascade(before, result, easyWords) : null;
         if (match) {
+          cascadePaused = true;
+          pauseClock();
+          if (!roundActive(activeRound)) return;
           // 1語のリワードを読み終えてから次の連鎖へ。消去・落下に重ねない。
           if (!await delay(REWARD_MS, activeRound)) return;
           hideDiscovery();
@@ -345,7 +355,9 @@
       busy = false;
       $('restart-button').disabled = false;
       $('submit-button').disabled = false;
-      $('chain-toggle').disabled = false;
+      cascadePaused = false;
+      updateClock();
+      resumeClock();
       boardElement.setAttribute('aria-busy', 'false');
       [...tiles.children].forEach(tile => tile.classList.remove('falling', 'chain-ready'));
       scheduleIdleHint();
@@ -353,15 +365,15 @@
   }
 
   function start(intro = false) {
-    phase = 'reset'; pauseClock(); invalidateRound();
+    phase = 'reset'; cascadePaused = false; pauseClock(); invalidateRound();
     clearTimeout(resultTimer); resultTimer = null;
     if ($('result-dialog').open) $('result-dialog').close();
     $('timeup-toast').hidden = true;
     phase = intro ? 'intro' : 'playing';
-    remainingMs = ROUND_SECONDS * 1000; maxChain = 0; busy = false; updateClock();
+    remainingMs = selectedSeconds * 1000; maxChain = 0; busy = false; updateClock();
     boardElement.setAttribute('aria-disabled', 'false');
     boardElement.setAttribute('aria-busy', 'false');
-    for (const id of ['submit-button','restart-button','chain-toggle','help-button']) $(id).disabled = false;
+    for (const id of ['submit-button','restart-button','shuffle-button','help-button']) $(id).disabled = false;
     clearIdleHint();
     hideDiscovery();
     globalThis.WordPopMotion?.clear();
@@ -390,7 +402,7 @@
     $('available-count').textContent = `5〜6文字の単語 ${new Set(E.straightWords(board, longWords).map(m => m.word)).size} 個`;
     render();
     scheduleIdleHint();
-    resumeClock();
+    updateClock(); resumeClock();
   }
   boardElement.addEventListener('pointerdown', event => {
     if (busy || !canInteract() || pointerId !== null || !event.isPrimary || event.button !== 0 || indexAt(event.clientX, event.clientY) === null) return;
@@ -458,7 +470,7 @@
     if (!['intro','playing'].includes(phase)) return;
     cancel(); clearIdleHint(); helpPage = 0; renderHelpPage();
     for (const details of $('help-dialog').querySelectorAll('details')) details.open = false;
-    $('help-dialog').showModal();
+    $('help-dialog').showModal(); updateClock();
   }
   $('help-button').addEventListener('click', openHelp);
   $('help-next').addEventListener('click', () => { helpPage = Math.min(helpPages.length - 1, helpPage + 1); renderHelpPage(); });
@@ -466,8 +478,17 @@
   for (const id of ['close-help','help-play']) $(id).addEventListener('click', () => $('help-dialog').close());
   $('help-dialog').addEventListener('close', () => {
     if (phase === 'intro') phase = 'playing';
-    resumeClock(); scheduleIdleHint();
+    resumeClock(); updateClock(); scheduleIdleHint();
   });
+  function openAudioSettings() {
+    if (!['intro','playing','result'].includes(phase)) return;
+    pauseClock(); cancel(); clearIdleHint();
+    $('audio-dialog').showModal(); updateClock();
+  }
+  $('audio-button').addEventListener('click', openAudioSettings);
+  for (const button of document.querySelectorAll('[data-open-audio]')) button.addEventListener('click', openAudioSettings);
+  $('close-audio').addEventListener('click', () => $('audio-dialog').close());
+  $('audio-dialog').addEventListener('close', () => { resumeClock(); updateClock(); scheduleIdleHint(); });
   $('retry-button').addEventListener('click', () => start());
   $('result-dialog').addEventListener('cancel', event => event.preventDefault());
   document.addEventListener('visibilitychange', () => {
@@ -481,9 +502,28 @@
     showMeaning(chip.dataset.word);
     scheduleIdleHint();
   });
-  $('chain-toggle').addEventListener('change', scheduleIdleHint);
+
   new ResizeObserver(drawPath).observe(boardElement);
-  $('round-seconds').textContent = ROUND_SECONDS;
+  function syncDuration(value) {
+    selectedSeconds = [30,60,90].includes(Number(value)) ? Number(value) : ROUND_SECONDS;
+    for (const select of document.querySelectorAll('.round-duration')) select.value = selectedSeconds;
+    if (phase === 'intro') { remainingMs = selectedSeconds * 1000; updateClock(); }
+  }
+  for (const select of document.querySelectorAll('.round-duration')) select.addEventListener('change', () => syncDuration(select.value));
+  $('shuffle-button').addEventListener('click', () => {
+    if (busy || !canInteract()) return;
+    if (score < 100) { message('シャッフルには100点必要だよ。', true); return; }
+    const shuffled = E.shuffleBoard(board, longWords, easyWords);
+    if (!shuffled) { message('今はシャッフルできないよ。', true); return; }
+    clearIdleHint(); hideDiscovery(); globalThis.WordPopMotion?.clear();
+    releasePointer(); path = []; board = shuffled; score -= 100;
+    $('score').textContent = score;
+    render();
+    $('available-count').textContent = `5〜6文字の単語 ${new Set(E.straightWords(board, longWords).map(m=>m.word)).size} 個`;
+    message('シャッフル！ −100 pt。新しい単語を探してみよう。', true);
+    updateClock(); scheduleIdleHint();
+  });
+  syncDuration(ROUND_SECONDS);
   start(true);
   openHelp();
 })();

@@ -1,0 +1,3 @@
+const test=require('node:test'),assert=require('node:assert/strict');require('../vocabulary');require('../words');require('../engine');
+test('シャッフルは56文字を増減せず、配置を変え、単語のある盤面を有限処理で返す',()=>{let n=3;const random=()=>((n=(1664525*n+1013904223)>>>0)/2**32);for(let i=0;i<20;i++){const b=WordPopEngine.createBoard(random),next=WordPopEngine.shuffleBoard(b,WordPopLongWords,WordPopEasyWords,random);assert.ok(next);assert.notDeepEqual(next,b);assert.deepEqual([...next].sort(),[...b].sort());assert.ok(WordPopEngine.findWord(next,WordPopWords));}});
+test('変化できない盤面は失敗として返し、文字の埋め込みはしない',()=>{assert.equal(WordPopEngine.shuffleBoard(Array(56).fill('Z'),WordPopLongWords,WordPopEasyWords,()=>0),null);});

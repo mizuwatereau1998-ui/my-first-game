@@ -11,15 +11,16 @@
   <script defer src="engine.js"></script>
   <script defer src="character.js"></script>
   <script defer src="motion.js"></script>
+  <script defer src="audio.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
   <main class="play-screen" aria-label="Word Pop! ゲーム画面">
     <header class="play-header">
       <div class="game-brand"><h1 class="game-logo" aria-label="Word Pop!"><span>Word</span> <span>Pop<span class="logo-bang">!</span></span></h1><p class="game-tagline">なぞって単語をつくろう！</p></div>
-      <section class="score-card" aria-label="スコア"><span class="score-heading">SCORE</span><div class="score"><span id="score">0</span><small>pt</small></div><div class="word-count">みつけた単語 <strong id="found-count">0</strong> 個</div><div class="time-card" aria-label="残り時間"><span class="time-heading">TIME</span><span id="time-left" role="timer">1:30</span></div></section>
+      <section class="score-card" aria-label="スコア"><span class="score-heading">SCORE</span><div class="score"><span id="score">0</span><small>pt</small></div><div class="word-count">みつけた単語 <strong id="found-count">0</strong> 個</div><div class="time-card" aria-label="残り時間"><span class="time-heading">TIME</span><span id="time-left" role="timer">0:30</span><span id="chain-clock-note" hidden>連鎖中 STOP</span></div></section>
 
-      <nav class="play-controls" aria-label="ゲーム操作"><button id="help-button" class="icon-button" aria-label="遊び方を開く">? <span>遊び方</span></button><button id="restart-button" class="restart-button"><span>↻</span> はじめから</button><label class="chain-option"><input id="chain-toggle" type="checkbox" checked><span class="toggle-track" aria-hidden="true"></span><span>自動連鎖</span><span class="toggle-state" aria-hidden="true"></span></label></nav>
+      <nav class="play-controls" aria-label="ゲーム操作"><button id="help-button" class="icon-button" aria-label="遊び方を開く">? <span>遊び方</span></button><button id="restart-button" class="restart-button"><span>↻</span> はじめから</button><button id="audio-button" class="audio-button" aria-label="音の設定を開く">♪ 音の設定</button><button id="shuffle-button" class="shuffle-button" disabled><span aria-hidden="true">⤨</span> シャッフル <small>−100 pt</small></button></nav>
     </header>
     <div class="game-layout">
       <section class="game-panel" aria-label="英単語ゲーム">
@@ -35,7 +36,7 @@
 
       </section>
       <aside class="sidebar">
-        <section class="found-card"><h2>RECENT WORDS</h2><div id="found-words" class="found-words"><p class="empty-state">見つけた単語がここに並ぶよ。</p></div></section>
+        <section class="found-card"><h2>RECENT WORDS</h2><div id="found-words" class="found-words" tabindex="0" aria-label="見つけた単語一覧。スクロールで全部確認できます"><p class="empty-state">見つけた単語がここに並ぶよ。</p></div></section>
       </aside>
     </div>
 
@@ -44,31 +45,34 @@
     <header class="dialog-heading"><span class="eyebrow">HOW TO PLAY</span><h2 id="help-title">あそびかた</h2><button id="close-help" class="dialog-close" aria-label="遊び方を閉じる" autofocus>×</button></header>
     <div class="help-pages">
       <section class="help-page" aria-labelledby="help-page-1">
-        <h3 id="help-page-1">単語をつくろう！</h3>
+        <h3 id="help-page-1">英単語をつくろう！</h3><p class="sound-warning">※音が鳴ります。BGM・効果音は「音の設定」でOFFにできます。<button type="button" class="inline-audio-button" data-open-audio>♪ 音の設定</button></p>
         <div class="help-example" aria-label="C、A、Tを一直線に選んでCAT、猫"><span class="help-tile">C</span><span class="help-tile">A</span><span class="help-tile">T</span><span class="help-example-word">CAT → 猫</span></div>
-        <ul><li>となりの文字を、タテ・ヨコ・斜めの<strong>8方向の一直線</strong>になぞろう。</li><li><strong>3〜6文字</strong>の登録された英単語を作れるよ。</li><li>できたら<strong>「決定」</strong>！ マウス・タッチは離しても決定できるよ。</li></ul>
-        <details><summary>選び直し・キーボード操作</summary><p>途中では曲がれず、同じマスは1回だけ。直前のマスに戻ると1文字取り消し。キーボードは矢印で移動、スペースで選択、Enterで決定、Escで取り消し。</p><p>単語帳は基本形中心の<span id="vocabulary-count">3,000</span>語。複数形・過去形を自動で正解にはしないよ。</p></details>
+        <ul><li>アルファベットのブロックをつないで英単語をつくろう。</li><li>ブロックはタテ・ヨコ・ナナメの8方向につなぐことができるよ。</li><li>複数形や過去形などの活用はふくまないよ。</li></ul>
+        <details><summary>選び直し・キーボード操作</summary><p>8方向の一直線につなぎます。途中では曲がれず、同じマスは1回だけ。直前のマスに戻ると1文字取り消し。キーボードは矢印で移動、スペースで選択、Enterで決定、Escで取り消し。</p><p>単語帳は基本形中心の<span id="vocabulary-count">3,000</span>語。複数形・過去形を自動で正解にはしないよ。</p></details>
       </section>
       <section class="help-page" aria-labelledby="help-page-2" hidden>
-        <h3 id="help-page-2">見つけて、つながる！</h3>
+        <h3 id="help-page-2">れんさをねらおう！</h3>
         <div class="help-score-example"><strong>CAT <span>+30 pt</span></strong><span>文字数 × 10点</span></div>
-        <ul><li>正解で消去 → 落下 → 新しい文字を補充！</li><li>連鎖ONなら、条件に合う<strong>3〜4文字</strong>が偶然そろうと連鎖！</li><li>得点と単語を記録。同じ語も何度でも加点できるよ。</li></ul>
+        <ul><li>新しく落ちたブロックで、<strong>3〜4文字の英単語</strong>がそろうと連鎖！</li><li>連鎖中はタイムがストップするから、うまく連鎖をねらって高得点を目指そう！</li><li>同じ単語でも何度も点数が加算されるよ</li></ul>
         <div class="help-chain-example"><span>2連鎖 <b>×2</b></span><span>3連鎖 <b>×3</b></span><span>最大4連鎖 <b>×4</b></span></div>
       </section>
       <section class="help-page" aria-labelledby="help-page-3" hidden>
         <h3 id="help-page-3">画面の見方</h3>
-        <dl class="help-ui-list"><div><dt>SCORE / TIME</dt><dd>得点・総発見数と残り時間。1プレイ<span id="round-seconds">90</span>秒！</dd></div><div><dt>RECENT WORDS</dt><dd>直近3種類の単語・日本語訳・発見回数。</dd></div><div><dt>自動連鎖</dt><dd>ON / OFFを切り替えられるよ。</dd></div><div><dt>はじめから</dt><dd>得点・盤面・記録・残り時間をリセット。</dd></div><div><dt>遊び方</dt><dd>いつでも1ページ目から。読んでいる間は時間もお休み。</dd></div></dl>
+        <dl class="help-ui-list"><div><dt>SCORE / TIME</dt><dd>得点と残り時間が表示されているよ</dd></div><div><dt>シャッフル</dt><dd>スコアを消費して盤面をシャッフルするよ。単語が見つからない時につかってね（100点消費）</dd></div><div><dt>あそび方</dt><dd>いま開いている「あそびかた」をもう一度確認できるよ</dd></div><div><dt>RECENT WORDS</dt><dd>見つけた単語がここにならぶよ。スクロールで全部見られるよ</dd></div></dl>
+        <label class="duration-choice">プレイ時間 <select id="round-duration" class="round-duration"><option value="30" selected>30秒</option><option value="60">60秒</option><option value="90">90秒</option></select></label><p class="help-note">開始前は今回の時間、プレイ中の変更は次のプレイから反映されるよ。自動連鎖はいつでもON！</p>
         <p class="help-note">15秒待つとヒントが出るよ。訳がない単語は「準備中」と表示。</p><p id="available-count" class="help-note"></p>
       </section>
     </div>
     <footer class="help-navigation"><button id="help-back" class="help-secondary" disabled>戻る</button><span id="help-progress" role="status" aria-live="polite" aria-atomic="true">1 / 3</span><button id="help-next" class="help-primary">次へ</button><button id="help-play" class="help-primary" hidden>あそぶ！</button></footer>
   </dialog>
+  <dialog id="audio-dialog" class="game-dialog" aria-labelledby="audio-title"><header class="dialog-heading"><span class="eyebrow">SOUND</span><h2 id="audio-title">音の設定</h2><button id="close-audio" class="dialog-close" aria-label="音の設定を閉じる">×</button></header><p class="sound-intro">BGM・効果音は最初はON。お好みで切り替えてね。</p><label class="sound-setting"><span>BGM<small>やさしいループ音楽</small></span><input id="bgm-toggle" type="checkbox"><span class="sound-state" aria-hidden="true"></span></label><label class="sound-setting"><span>効果音<small>選択・正解・れんさ</small></span><input id="sfx-toggle" type="checkbox"><span class="sound-state" aria-hidden="true"></span></label><p id="audio-status" role="status" class="help-note">設定はこのブラウザに保存されます。</p></dialog>
   <div id="timeup-toast" role="status" hidden>TIME UP!</div>
   <dialog id="result-dialog" class="game-dialog" aria-labelledby="result-title">
-    <header class="result-heading"><img src="assets/characters/pop_idle.png" alt="" aria-hidden="true"><h2 id="result-title">RESULT</h2></header>
+    <header class="result-heading"><img src="assets/characters/pop_idle.png" alt="" aria-hidden="true"><h2 id="result-title">RESULT</h2><button type="button" class="inline-audio-button" data-open-audio aria-label="音の設定を開く">♪</button></header>
     <div class="result-score"><strong id="result-score">0</strong><span>pt</span></div>
     <div class="result-stats"><div>見つけた単語<strong id="result-count">0</strong></div><div>最大連鎖<strong id="result-chain">0</strong></div></div>
     <h3 class="result-list-heading">FOUND WORDS</h3><ul id="result-words" aria-label="今回見つけた単語"></ul>
+    <label class="duration-choice result-duration-choice">次のプレイ時間 <select id="result-duration" class="round-duration"><option value="30" selected>30秒</option><option value="60">60秒</option><option value="90">90秒</option></select></label>
     <button id="retry-button" class="help-primary" autofocus>もう一度あそぶ！</button>
   </dialog>
 </body>

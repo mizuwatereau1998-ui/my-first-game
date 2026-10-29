@@ -12,7 +12,7 @@ const path=require('node:path');
  await page.clock.install();
  await page.goto(process.env.GAME_URL||'http://127.0.0.1:8000');await dismissStartHelp(page, true);
  await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
- await page.locator('#chain-toggle').uncheck(); // 停止した時計で、ここから15秒を計測。
+ await require('./set-test-cascades.cjs')(page); // 停止した時計で、ここから15秒を計測。
  const before=await page.locator('.tile').allTextContents();
  await page.clock.runFor(14999);assert.equal(await page.locator('.idle-hint').count(),0);
  await page.clock.runFor(1);assert.equal(await page.locator('.idle-hint').count(),3);
@@ -73,7 +73,7 @@ const path=require('node:path');
  // 意味未整備でも登録語は正解。訳を捏造せず準備中を表示。
  await page.route('**/engine.js',route=>route.fulfill({contentType:'application/javascript',body:
   fs.readFileSync(path.resolve(__dirname,'../engine.js'),'utf8')+`\nWordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');b.splice(16,5,...'ATLAS');return b;};`}));
- await page.reload();await dismissStartHelp(page, true);await page.locator('#chain-toggle').uncheck();
+ await page.reload();await dismissStartHelp(page, true);await require('./set-test-cascades.cjs')(page);
  await keyboardWord(16,5);
  assert.equal(await page.locator('.chip-word').first().textContent(),'ATLAS');
  assert.equal(await page.locator('.chip-meaning').first().textContent(),'意味は準備中');

@@ -24,7 +24,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  for(const i of [16,17,18]){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}await page.keyboard.press('Enter');await page.clock.runFor(5500);
  const states=await page.evaluate(()=>states);assert.deepEqual(states,['correct','chain2','chain3','idle']);
  // 画像が1枚もなくても仮表示・単語判定・得点は動く。
- await page.unroute('**/engine.js');await page.route('**/assets/characters/*.png',r=>r.fulfill({status:404,body:''}));await page.reload();await dismissStartHelp(page, true);await page.locator('#chain-toggle').uncheck();
+ await page.unroute('**/engine.js');await page.route('**/assets/characters/*.png',r=>r.fulfill({status:404,body:''}));await page.reload();await dismissStartHelp(page, true);await require('./set-test-cascades.cjs')(page);
  assert.equal(await page.locator('.mascot').isVisible(),true);for(const i of [16,17,18]){await page.locator('.tile').nth(i).focus();await page.keyboard.press('Space');}await page.keyboard.press('Enter');await page.clock.runFor(2000);assert.equal(await page.locator('#score').textContent(),'30');assert.equal(await page.locator('.mascot').isVisible(),true);
  assert.deepEqual(errors,[]);console.log('PASS: all four PNGs / 3+ mapping / no idle mid-chain / delayed idle / stale timer canceled / mobile / reduced motion / missing images keep game playable');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1470,3 +1470,49 @@ dialog p,dialog li {
  #result-words { min-height:60px; }
  #retry-button { min-height:44px;padding:6px; }
 }
+/* 30秒から選ぶプレイ時間・連鎖中のタイム停止・有料シャッフル。 */
+.shuffle-button { min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:7px 10px;border:2px solid #e7faff;border-radius:16px;color:#1a5e85;background:linear-gradient(#f3fcff,#b9e6fb);box-shadow:inset 0 2px white,0 3px #4b96bc;font-size:13px;font-weight:800; }
+.shuffle-button>span { font-size:24px;line-height:1; }
+.shuffle-button small { white-space:nowrap;font-family:var(--game-font);font-size:12px;color:#805626;background:#fff2c6;border-radius:9px;padding:3px 6px; }
+.shuffle-button:disabled { opacity:.6;cursor:not-allowed; }
+.shuffle-button:active:not(:disabled) { transform:translateY(2px); }
+.time-card { flex-wrap:wrap; }
+#chain-clock-note { flex-basis:100%;font-size:10px;font-weight:800;color:#fff0a0;text-align:center;line-height:1.1; }
+.time-paused { border-color:#ffdf7b;background:#075d8b; }
+.time-paused #time-left { animation:none; }
+.found-words { max-height:430px;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#71bfde #d9f5ff;scrollbar-width:thin;padding:3px; }
+.duration-choice { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;font-size:13px;font-weight:750;color:#22668e;margin:12px 0;flex-shrink:0; }
+.round-duration { min-height:40px;padding:5px 12px;font:inherit;color:#1a5c87;border:2px solid #95cbe5;border-radius:12px;background:#fff9e7; }
+.result-duration-choice { margin:0 0 12px; }
+@media(max-width:700px) { .found-words { max-height:330px; }.shuffle-button { padding:6px;font-size:12px;gap:5px; }.shuffle-button>span { font-size:20px; }.shuffle-button small { font-size:11px; }.duration-choice { font-size:12px; } }
+@media(max-height:420px) { .result-duration-choice { margin-bottom:6px;gap:6px;font-size:11px; }.result-duration-choice select { min-height:30px;padding:2px 8px; } }
+.audio-button { min-height:44px;border:2px solid #edfbff;border-radius:14px;padding:7px 12px;font-size:13px;font-weight:800;color:#225f85;background:linear-gradient(#f4fdff,#b9e6fa);box-shadow:inset 0 2px white,0 3px #64a5c6; }
+.sound-intro { color:#346b88;font-size:13px;text-align:center; }
+.sound-setting { display:flex;align-items:center;gap:12px;background:#fff6df;border:2px solid white;border-radius:18px;padding:14px;margin:12px 0;color:#24658b;font-size:18px;font-weight:800;cursor:pointer; }
+.sound-setting>span:first-child { flex:1; }.sound-setting small { display:block;font-size:12px;font-weight:500;color:#6a808e; }.sound-setting input { width:24px;height:24px;accent-color:#168db4; }.sound-state { font-family:var(--game-font);font-size:16px;min-width:33px;color:#677e8c; }.sound-state::after { content:'OFF'; }.sound-setting:has(input:checked) .sound-state { color:#087e98; }.sound-setting:has(input:checked) .sound-state::after { content:'ON'; }
+@media(max-width:700px) { .audio-button { min-height:40px;font-size:12px;padding:6px 9px; } }
+@media(max-width:700px) {
+  .play-controls { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+  .play-controls .icon-button,.play-controls .restart-button { padding:6px 4px;justify-content:center;min-width:0; }
+  .play-controls .audio-button { grid-column:1;min-width:0;padding:5px;font-size:12px; }
+  .shuffle-button { grid-column:2;width:auto;min-width:0;display:flex;flex-wrap:wrap;padding:5px;gap:2px;font-size:11px;line-height:1.2; }
+  .shuffle-button>span { display:none; }.shuffle-button small { padding:1px 5px; }
+  .play-header { grid-template-rows:auto minmax(160px,auto); }
+}
+.help-page .sound-warning { color:#825b29;background:#fff0be;border:1px solid #f0cf8c;border-radius:10px;padding:7px 9px;font-size:12px;line-height:1.6; }
+.inline-audio-button { border:1px solid #9dcee4;border-radius:10px;background:#edfaff;color:#236688;padding:5px 8px;min-height:32px;font:inherit;cursor:pointer; }
+.sound-warning .inline-audio-button { display:block;margin:5px auto 0;font-size:12px; }
+/* 4つの操作を2段にそろえ、中間のPC幅でもヘッダーが縦に伸びないようにする。 */
+.play-controls { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+.play-controls .audio-button,.play-controls .shuffle-button { min-width:0; }
+.play-controls .shuffle-button { grid-column:2;flex-wrap:wrap;gap:2px;padding:5px;font-size:12px; }
+.play-controls .audio-button { grid-column:1; }
+@media(min-width:701px) and (max-width:900px) {
+  .play-controls .restart-button,.play-controls .icon-button { font-size:12px;padding:7px 5px;justify-content:center; }
+  .play-controls .restart-button>span { font-size:17px; }
+  .play-controls .audio-button { font-size:12px;padding:6px 5px; }
+  .shuffle-button>span { display:none; }
+}
+/* 画面回転中に、旧サイズの粒子レイヤーで横スクロールを発生させない。 */
+.tile-effects { max-width:calc(100% - 14px); }
+@media(max-width:700px) { .play-controls .restart-button { white-space:nowrap;padding:6px 3px;font-size:11px; } }

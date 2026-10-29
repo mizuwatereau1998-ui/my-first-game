@@ -20,7 +20,7 @@ const path = require('node:path');
     async function load() {
       await page.goto(url);await dismissStartHelp(page, true);
       await page.clock.pauseAt(await page.evaluate(() => Date.now()+1000));
-      await page.locator('#chain-toggle').uncheck();
+      await require('./set-test-cascades.cjs')(page);
     }
     async function select(indices) {
       for (const i of indices) {
@@ -99,7 +99,7 @@ const path = require('node:path');
       window.cascadeCalls=0;
       WordPopEngine.findCascade=(before,result)=>{cascadeCalls++;const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return {word:p.map(i=>result.board[i]).join(''),path:p};};
     `}));
-    await load();await page.locator('#chain-toggle').check();
+    await load();await require('./set-test-cascades.cjs')(page,true);
     await select([16,17,18]);await page.keyboard.press('Enter');
     for (let chain=1;chain<=4;chain++) {
       assert.equal(await page.locator('.tile-effects').getAttribute('data-chain'),String(chain));
