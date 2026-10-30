@@ -17,6 +17,7 @@
   let clockTimer = null, resultTimer = null, roundId = 0, maxChain = 0;
   const pendingDelays = new Map();
   let chainSession = null;
+  let pathAnimation = null, selectionStep = null;
   function updateClock() {
     const seconds = Math.ceil(remainingMs / 1000);
     $('time-left').parentElement.classList.toggle('time-paused', cascadePaused && phase === 'playing');
@@ -48,6 +49,7 @@
     for (const [timer, resolve] of pendingDelays) { clearTimeout(timer); resolve(false); }
     pendingDelays.clear();
     chainSession = null;
+    cancelAnimationFrame(pathAnimation); pathAnimation = null;
   }
   function roundActive(id) {
     if (phase === 'playing' && deadline !== null && performance.now() >= deadline) finishRound();
@@ -176,12 +178,21 @@
     const timer = setTimeout(() => { pendingDelays.delete(timer); resolve(roundActive(id)); }, ms);
     pendingDelays.set(timer, resolve);
   });
-  function waitForChainInput(session, id) {
+  function waitForChainInput(session, id, automatic) {
     return new Promise(resolve => {
-      const timer = setTimeout(() => session.finish(roundActive(id)), REWARD_MS);
+      session.expired = false;
+      const timer = setTimeout(() => {
+        session.expired = true;
+        session.resume();
+      }, REWARD_MS);
+      session.resume = () => {
+        // 選択を保ったまま、重ならない自動候補の処理を続ける。
+        if (session.expired && (automatic() || (pointerId === null && !path.length))) session.finish(roundActive(id));
+      };
       session.finish = active => {
         clearTimeout(timer);
         pendingDelays.delete(timer);
+        session.resume = null;
         resolve(active);
       };
       pendingDelays.set(timer, session.finish);
@@ -207,6 +218,15 @@
   function drawPath() {
     $('selected-line').setAttribute('points', points(path));
     $('hint-line').setAttribute('points', !tutorialComplete && !busy && !path.length ? points(tutorialPath) : '');
+  }
+  function followFallingPath() {
+    cancelAnimationFrame(pathAnimation);
+    drawPath();
+    pathAnimation = path.length && tiles.querySelector('.falling')
+      ? requestAnimationFrame(followFallingPath) : null;
+  }
+  function canSelect() {
+    return canInteract() && !chainSession?.manual && (!busy || (!!chainSession && !chainSession.processingManual));
   }
   function updateSelection() {
     [...tiles.children].forEach((tile, index) => {
@@ -248,12 +268,19 @@
       tiles.append(tile);
     });
     updateSelection();
+    if (distances.length && path.length) followFallingPath();
   }
   function select(index) {
-    if (busy || !canInteract()) return;
+    if (!canSelect() || chainSession?.clearing?.includes(index)) return;
     clearIdleHint();
     hideDiscovery();
-    const nextPath = E.extendPath(path, index);
+    // 落下で選択済みの位置関係が変わっても、最初に決めた方向を保つ。
+    const nextPath = path.length >= 2 && selectionStep !== null
+      ? index === path.at(-2) ? path.slice(0, -1)
+        : path.length < 6 && !path.includes(index) && E.adjacent(path.at(-1), index) && index - path.at(-1) === selectionStep ? [...path, index] : path
+      : E.extendPath(path, index);
+    if (nextPath.length < 2) selectionStep = null;
+    else if (path.length < 2) selectionStep = nextPath[1] - nextPath[0];
     if (nextPath !== path) globalThis.WordPopAudio?.sfx('select');
     path = nextPath;
     updateSelection();
@@ -281,7 +308,7 @@
     if (previous !== null && boardElement.hasPointerCapture(previous)) boardElement.releasePointerCapture(previous);
   }
   async function submit() {
-    if (busy || !path.length || !canInteract()) return;
+    if ((busy && !chainSession) || chainSession?.manual || pointerId !== null || !path.length || !canInteract()) return;
     clearIdleHint();
     const selected = [...path], word = selected.map(index => board[index]).join('');
     if (!E.isWord(word, dictionary)) {
@@ -289,14 +316,16 @@
       path = [];
       updateSelection();
       scheduleIdleHint();
+      chainSession?.resume?.();
       return;
     }
     const activeRound = roundId;
     if (chainSession) {
       // 盤面を変更する処理は既存のループだけが行い、二重加算を防ぐ。
       chainSession.manual = {word, path: selected, manual: true};
+      const accepting = !busy;
       setBusy(true);
-      chainSession.finish(true);
+      if (accepting) chainSession.finish(true);
       return;
     }
     const session = chainSession = {manual: null, finish: null};
@@ -313,6 +342,9 @@
     let match = {word, path: selected, manual: true}, chain = 1;
     try {
       while (match) {
+        if (match.manual) { path = []; selectionStep = null; updateSelection(); }
+        session.processingManual = !!match.manual;
+        session.clearing = match.path;
         const earned = match.word.length * 10 * chain;
         showMeaning(match.word);
         if (chain > 1) {
@@ -340,11 +372,20 @@
         if (!await delay(240, activeRound)) return;
         const before = [...board];
         const result = E.refillLongWords(E.collapse(board, match.path), longWords);
+        // 文字ではなく元のブロックを追跡。同じ文字の別ブロックに選択を移さない。
+        const destinations = new Map();
+        const fresh = new Set(result.fresh);
+        result.board.forEach((_, index) => {
+          if (!fresh.has(index)) destinations.set(index - result.distances[index] * E.COLS, index);
+        });
+        path = path.map(index => destinations.get(index));
+        if (session.manual) session.manual.path = session.manual.path.map(index => destinations.get(index));
         board = result.board;
-        path = [];
+        session.clearing = [];
         render(result.distances);
         if (!await delay(380, activeRound)) return;
         [...tiles.children].forEach(tile => tile.classList.remove('falling'));
+        drawPath();
         if (!roundActive(activeRound)) return;
         globalThis.WordPopAudio?.sfx('fall');
         maxChain = Math.max(maxChain, chain);
@@ -354,19 +395,28 @@
         $('found-count').textContent = found.length;
         renderRecentWords();
         showDiscovery(match.word, chain, earned);
-        const automatic = E.findCascade(before, result, easyWords);
+        let candidateKey = null, candidate = null;
+        const automatic = () => {
+          const key = path.join(',');
+          if (candidateKey !== key) {
+            candidateKey = key;
+            candidate = E.findCascade(before, result, easyWords, path);
+          }
+          return candidate;
+        };
         cascadePaused = true;
         pauseClock();
         if (!roundActive(activeRound)) return;
+        if (!session.manual) {
+          const input = waitForChainInput(session, activeRound, automatic);
+          setBusy(false);
+          message(`${chain}連鎖！ 選択を続けながら、次の単語も連鎖につなげよう！`);
+          if (!(await input) || !roundActive(activeRound)) return;
+        }
+        match = session.manual || automatic();
         session.manual = null;
-        const input = waitForChainInput(session, activeRound);
-        setBusy(false);
-        message(`${chain}連鎖！ 単語の表示中に見つけた単語も連鎖につながるよ！`);
-        if (!(await input) || !roundActive(activeRound)) return;
-        match = session.manual || automatic;
         if (match) {
           setBusy(true);
-          releasePointer(); path = []; updateSelection();
           hideDiscovery();
           chain++;
         }
@@ -432,10 +482,11 @@
     updateClock(); resumeClock();
   }
   boardElement.addEventListener('pointerdown', event => {
-    if (busy || !canInteract() || pointerId !== null || !event.isPrimary || event.button !== 0 || indexAt(event.clientX, event.clientY) === null) return;
+    const index = indexAt(event.clientX, event.clientY);
+    if (!canSelect() || pointerId !== null || !event.isPrimary || event.button !== 0 || index === null || chainSession?.clearing?.includes(index)) return;
     event.preventDefault();
     clearIdleHint();
-    path = [];
+    path = []; selectionStep = null;
     pointerId = event.pointerId;
     boardElement.setPointerCapture(pointerId);
     moveAlong(event.clientX, event.clientY);
@@ -447,20 +498,23 @@
   });
   boardElement.addEventListener('pointerup', event => {
     if (event.pointerId !== pointerId) return;
-    moveAlong(event.clientX, event.clientY);
+    // 落下だけで指の下の文字が変わった場合、それを追加選択しない。
+    if (!lastPoint || event.clientX !== lastPoint.x || event.clientY !== lastPoint.y) moveAlong(event.clientX, event.clientY);
     releasePointer();
     submit();
+    chainSession?.resume?.();
   });
   function cancel() {
-    if (busy) return;
+    if (busy && (!chainSession || chainSession.manual)) return;
     releasePointer(); path = []; updateSelection(); scheduleIdleHint();
+    chainSession?.resume?.();
   }
   boardElement.addEventListener('pointercancel', cancel);
   boardElement.addEventListener('lostpointercapture', () => { if (pointerId !== null) cancel(); });
   window.addEventListener('blur', () => { cancel(); clearIdleHint(); });
   boardElement.addEventListener('keydown', event => {
     const tile = event.target.closest('.tile');
-    if (!tile || busy || !canInteract()) return;
+    if (!tile || !canSelect()) return;
     scheduleIdleHint();
     const index = Number(tile.dataset.index);
     const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];

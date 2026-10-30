@@ -125,10 +125,11 @@
     return {...result, board, protected: chosen.path};
   }
   const matchKey = match => `${match.word}:${match.path.join(',')}`;
-  function findCascade(before, result, easyWords) {
+  function findCascade(before, result, easyWords, selected = []) {
     const previous = new Set(straightWords(before, easyWords).map(matchKey));
     const fresh = new Set(result.fresh);
     const candidates = straightWords(result.board, easyWords).filter(match => {
+      if (match.path.some(index => selected.includes(index))) return false;
       if (previous.has(matchKey(match))) return false;
       // 手動で発見するために配置した長い語を、その中の短い語で即消去しない。
       if (match.path.some(index => result.protected?.includes(index))) return false;

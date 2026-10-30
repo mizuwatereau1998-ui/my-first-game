@@ -57,7 +57,7 @@ const path = require('node:path');
     await load();
     await enter([0, 1, 2]);
     await page.locator('.tile').nth(49).focus(); await page.keyboard.press('Space');
-    assert.equal(await page.locator('.tile.selected').count(), 3, '消去中は選択が変わらない');
+    assert.equal(await page.locator('.tile.selected').count(), 0, '手動確定の消去中は再選択しない');
     await page.clock.runFor(620);
     assert.equal(await page.locator('#board').getAttribute('aria-busy'), 'false');
     const frozen = await page.locator('#time-left').textContent();

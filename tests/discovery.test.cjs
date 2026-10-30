@@ -70,3 +70,11 @@ test('固定乱数の80手プレイで連鎖が有限に終わり、次の簡単
   assert.ok(counts.every(n=>n>=1));
   assert.ok(chains.some(n=>n>1));
 });
+test('選択中のブロックを保護し、重ならない自動連鎖を探す',()=>{
+  const before=Array(56).fill('Z'), board=[...before];
+  board.splice(23,3,...'CAT');board.splice(42,3,...'DOG');
+  const distances=Array(56).fill(0);distances[23]=distances[42]=1;
+  const result={board,distances,fresh:[24,43]};
+  assert.equal(E.findCascade(before,result,easy,[24]).word,'DOG');
+  assert.equal(E.findCascade(before,result,easy,[24,43]),null);
+});
