@@ -27,12 +27,13 @@
     layer.style.height = `${bounds.height}px`;
     const fragment = document.createDocumentFragment();
     const counts = [0, 3, 5, 7, 9];
+    const particleCount = counts[Math.min(chain, 4)];
     indices.forEach((index, order) => {
       const tile = tiles.children[index];
-      for (let n = 0; n < counts[chain]; n++) {
+      for (let n = 0; n < particleCount; n++) {
         const spark = document.createElement('i');
         spark.className = `pop-spark${n % 2 ? ' pop-dot' : ''}`;
-        const angle = (n / counts[chain] * 2 + order * .37) * Math.PI;
+        const angle = (n / particleCount * 2 + order * .37) * Math.PI;
         const radius = tile.offsetWidth * (.5 + (n % 3) * .15);
         spark.style.left = `${tile.offsetLeft + tile.offsetWidth / 2}px`;
         spark.style.top = `${tile.offsetTop + tile.offsetHeight / 2}px`;
@@ -48,7 +49,7 @@
       halo.className = 'chain-halo';
       fragment.append(halo);
     }
-    if (chain === 4) {
+    if (chain >= 4) {
       for (let n = 0; n < 12; n++) {
         const star = document.createElement('i');
         star.className = 'celebration-star';

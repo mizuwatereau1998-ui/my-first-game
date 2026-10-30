@@ -52,6 +52,7 @@ const fs = require('node:fs');
     for(let row=3;row<8;row++)assert.equal(after[row*7+col],before[row*7+col]);
   }
   assert.equal(await page.locator('#found-words .chip-word').textContent(),'CAT');
+  await page.locator('#chain-clock-note').waitFor({state:'hidden'});
   await drag(page,[35,36,37]);
   await page.waitForFunction(()=>document.getElementById('score').textContent==='60');
   assert.equal(await page.locator('#found-count').textContent(),'2');
@@ -98,6 +99,7 @@ const fs = require('node:fs');
   await mobile.page.waitForFunction(()=>document.getElementById('score').textContent==='30');
   assert.equal(await mobile.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   // 斜めの SUN も実際のタッチで選択する。
+  await mobile.page.locator('#chain-clock-note').waitFor({state:'hidden'});
   await touchDrag([34,40,46]);
   await mobile.page.waitForFunction(()=>document.getElementById('score').textContent==='60');
   // タッチのキャンセルで単語が確定されない。
@@ -138,6 +140,7 @@ const fs = require('node:fs');
   assert.equal(Number(await chainPage.locator('#score').textContent()),expected);
   assert.equal(await chainPage.locator('#restart-button').isEnabled(),true);
   assert.equal(await chainPage.locator('.tile').count(),56);
+  await chainPage.locator('#chain-clock-note').waitFor({state:'hidden'});
   assert.ok(await chainPage.evaluate(()=>WordPopEngine.straightWords(Array.from(document.querySelectorAll('.tile'),t=>t.textContent),WordPopEasyWords).length)>0);
   await chainPage.screenshot({path:'/workspace/scratch/word-pop/chains.png',fullPage:true});
   await chainContext.close();

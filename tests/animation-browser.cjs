@@ -93,11 +93,11 @@ const path = require('node:path');
     page.once('dialog',d=>d.accept());await page.locator('#restart-button').click();
     assert.equal(await page.locator('.tile-effects').count(),0);
     assert.equal(await page.locator('#score').textContent(),'0');
-    // 4連鎖の上限と表示の段階。実ゲームの候補判定はNode/既存ブラウザテストで検証。
+    // 4段階の連鎖表示。候補はテスト側で有限にする。実ゲームの候補判定はNode/既存ブラウザテストで検証。
     await page.route('**/engine.js*', r=>r.fulfill({contentType:'application/javascript',body:engine+`
       WordPopEngine.createBoard=()=>{const b=Array(56).fill('Z');for(const i of [0,16,35,49])b.splice(i,3,...'CAT');return b;};
       window.cascadeCalls=0;
-      WordPopEngine.findCascade=(before,result)=>{cascadeCalls++;const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return {word:p.map(i=>result.board[i]).join(''),path:p};};
+      WordPopEngine.findCascade=(before,result)=>{cascadeCalls++;if(cascadeCalls>3)return null;const p=WordPopEngine.findWord(result.board,WordPopEasyWords);return {word:p.map(i=>result.board[i]).join(''),path:p};};
     `}));
     await load();await require('./set-test-cascades.cjs')(page,true);
     await select([16,17,18]);await page.keyboard.press('Enter');
@@ -126,7 +126,8 @@ const path = require('node:path');
         await page.clock.runFor(1);
       }
     }
-    assert.equal(await page.evaluate(()=>cascadeCalls),3);
+    await page.clock.runFor(1000);
+    assert.equal(await page.evaluate(()=>cascadeCalls),4);
     assert.equal(await page.locator('#found-count').textContent(),'4');
     assert.equal(await page.locator('#board').getAttribute('aria-busy'),'false');
     await page.clock.runFor(1500);
@@ -141,6 +142,6 @@ const path = require('node:path');
     await page.clock.runFor(380);
     assert.equal(await page.locator('#score').textContent(),'30');
     assert.deepEqual(errors,[]);
-    console.log('PASS: responsive source/landing positions / acceleration / bounce / stagger / input lock / repeated clears / particle cleanup / 2–4 chain timing and cap / reduced motion');
+    console.log('PASS: responsive source/landing positions / acceleration / bounce / stagger / input lock / repeated clears / particle cleanup / 2–4 chain timing / reduced motion');
   } finally { await browser.close(); }
 })().catch(e=>{console.error(e);process.exitCode=1;});

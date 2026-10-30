@@ -16,11 +16,12 @@
   let phase = 'intro', remainingMs = ROUND_SECONDS * 1000, deadline = null;
   let clockTimer = null, resultTimer = null, roundId = 0, maxChain = 0;
   const pendingDelays = new Map();
+  let chainSession = null;
   function updateClock() {
     const seconds = Math.ceil(remainingMs / 1000);
     $('time-left').parentElement.classList.toggle('time-paused', cascadePaused && phase === 'playing');
     $('chain-clock-note').hidden = !cascadePaused || phase !== 'playing';
-    $('shuffle-button').disabled = phase !== 'playing' || busy || score < 100 || document.hidden || $('help-dialog').open || $('audio-dialog').open;
+    $('shuffle-button').disabled = phase !== 'playing' || busy || !!chainSession || score < 100 || document.hidden || $('help-dialog').open || $('audio-dialog').open;
     $('time-left').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
     $('time-left').parentElement.classList.toggle('time-warning', seconds > 0 && seconds <= 10);
   }
@@ -46,6 +47,7 @@
     roundId++;
     for (const [timer, resolve] of pendingDelays) { clearTimeout(timer); resolve(false); }
     pendingDelays.clear();
+    chainSession = null;
   }
   function roundActive(id) {
     if (phase === 'playing' && deadline !== null && performance.now() >= deadline) finishRound();
@@ -174,6 +176,23 @@
     const timer = setTimeout(() => { pendingDelays.delete(timer); resolve(roundActive(id)); }, ms);
     pendingDelays.set(timer, resolve);
   });
+  function waitForChainInput(session, id) {
+    return new Promise(resolve => {
+      const timer = setTimeout(() => session.finish(roundActive(id)), REWARD_MS);
+      session.finish = active => {
+        clearTimeout(timer);
+        pendingDelays.delete(timer);
+        resolve(active);
+      };
+      pendingDelays.set(timer, session.finish);
+    });
+  }
+  function setBusy(value) {
+    busy = value;
+    $('restart-button').disabled = value;
+    $('submit-button').disabled = value;
+    boardElement.setAttribute('aria-busy', String(value));
+  }
   function message(text, error = false) {
     $('feedback').textContent = text;
     $('feedback').classList.toggle('error', error);
@@ -273,10 +292,15 @@
       return;
     }
     const activeRound = roundId;
-    busy = true;
-    $('restart-button').disabled = true;
-    $('submit-button').disabled = true;
-    boardElement.setAttribute('aria-busy', 'true');
+    if (chainSession) {
+      // 盤面を変更する処理は既存のループだけが行い、二重加算を防ぐ。
+      chainSession.manual = {word, path: selected, manual: true};
+      setBusy(true);
+      chainSession.finish(true);
+      return;
+    }
+    const session = chainSession = {manual: null, finish: null};
+    setBusy(true);
     if (!tutorialComplete) {
       tutorialComplete = true;
       try { localStorage.setItem(storageKey, 'true'); } catch { /* 保存不可なら次回も案内します。 */ }
@@ -286,7 +310,7 @@
     $('hint-line').setAttribute('points', '');
     $('selected-line').setAttribute('points', '');
     $('shuffle-button').disabled = true;
-    let match = {word, path: selected}, chain = 1;
+    let match = {word, path: selected, manual: true}, chain = 1;
     try {
       while (match) {
         const earned = match.word.length * 10 * chain;
@@ -300,8 +324,8 @@
           $('chain-banner').classList.add('chain-bounce');
           $('chain-banner').textContent = `${chain} CHAIN!`;
           match.path.forEach(index => tiles.children[index].classList.add('chain-ready'));
-          message(`落下で ${match.word} がそろった！ ${chain}連鎖！`);
-          if (!await delay(300, activeRound)) return;
+          message(match.manual ? `${match.word} を発見！ ${chain}連鎖！ +${earned} pt` : `落下で ${match.word} がそろった！ ${chain}連鎖！`);
+          if (!match.manual && !await delay(300, activeRound)) return;
         } else {
           message(`${match.word}！ +${earned} pt`);
         }
@@ -330,14 +354,19 @@
         $('found-count').textContent = found.length;
         renderRecentWords();
         showDiscovery(match.word, chain, earned);
-        match = chain <= E.MAX_CASCADES
-          ? E.findCascade(before, result, easyWords) : null;
+        const automatic = E.findCascade(before, result, easyWords);
+        cascadePaused = true;
+        pauseClock();
+        if (!roundActive(activeRound)) return;
+        session.manual = null;
+        const input = waitForChainInput(session, activeRound);
+        setBusy(false);
+        message(`${chain}連鎖！ 単語の表示中に見つけた単語も連鎖につながるよ！`);
+        if (!(await input) || !roundActive(activeRound)) return;
+        match = session.manual || automatic;
         if (match) {
-          cascadePaused = true;
-          pauseClock();
-          if (!roundActive(activeRound)) return;
-          // 1語のリワードを読み終えてから次の連鎖へ。消去・落下に重ねない。
-          if (!await delay(REWARD_MS, activeRound)) return;
+          setBusy(true);
+          releasePointer(); path = []; updateSelection();
           hideDiscovery();
           chain++;
         }
@@ -350,15 +379,13 @@
       message(chain > 1 ? `${chain}連鎖！ 次の単語も一直線に探してみよう。` : 'いいね！ 次の単語もまっすぐ探してみよう。');
     } finally {
       if (activeRound !== roundId) return;
+      chainSession = null;
       $('chain-banner').hidden = true;
       globalThis.WordPopCharacter?.finish();
-      busy = false;
-      $('restart-button').disabled = false;
-      $('submit-button').disabled = false;
+      setBusy(false);
       cascadePaused = false;
       updateClock();
       resumeClock();
-      boardElement.setAttribute('aria-busy', 'false');
       [...tiles.children].forEach(tile => tile.classList.remove('falling', 'chain-ready'));
       scheduleIdleHint();
     }
@@ -511,7 +538,7 @@
   }
   for (const select of document.querySelectorAll('.round-duration')) select.addEventListener('change', () => syncDuration(select.value));
   $('shuffle-button').addEventListener('click', () => {
-    if (busy || !canInteract()) return;
+    if (busy || chainSession || !canInteract()) return;
     if (score < 100) { message('シャッフルには100点必要だよ。', true); return; }
     const shuffled = E.shuffleBoard(board, longWords, easyWords);
     if (!shuffled) { message('今はシャッフルできないよ。', true); return; }

@@ -77,7 +77,6 @@
     board.splice(49, 3, 'C', 'A', 'T');
     return true;
   }
-  const MAX_CASCADES = 3;
   function straightPaths(length) {
     const paths = [];
     for (let start = 0; start < COLS * ROWS; start++) {
@@ -166,5 +165,5 @@
     return rotated.some((letter,n)=>letter!==board[n]) &&
       (findWord(rotated, longWords) || findWord(rotated, easyWords)) ? rotated : null;
   }
-  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, refillLongWords, findCascade, MAX_CASCADES, shuffleBoard };
+  globalThis.WordPopEngine = { COLS, ROWS, randomLetter, createBoard, adjacent, extendPath, collapse, isWord, findWord, ensurePlayable, straightWords, refillLongWords, findCascade, shuffleBoard };
 })();

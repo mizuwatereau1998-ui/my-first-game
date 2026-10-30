@@ -59,10 +59,11 @@ test('固定乱数の80手プレイで連鎖が有限に終わり、次の簡単
     let match=options[Math.floor(random()*options.length)],chain=1;
     while(match){
       const before=b,result=E.collapse(b,match.path,random);b=result.board;
-      match=chain<=E.MAX_CASCADES?E.findCascade(before,result,easy):null;
+      match=E.findCascade(before,result,easy);
       if(match)chain++;
+      assert.ok(chain<1000, '固定盤面の連鎖が自然に終了する');
     }
-    assert.ok(chain<=4);E.ensurePlayable(b,easy);
+    E.ensurePlayable(b,easy);
     const count=new Set(E.straightWords(b,easy).map(m=>m.word)).size;
     assert.ok(count>=1);counts.push(count);chains.push(chain);
   }

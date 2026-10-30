@@ -59,7 +59,7 @@ const fs = require('node:fs'), path = require('node:path');
    await page.clock.runFor(180); // 古いCATの表示終了時刻を通過。
    assert.equal(await page.locator('#discovery-pop').isVisible(),true);
    assert.equal(await page.locator('#discovery-word').textContent(),'DOG');
-   assert.equal(await page.locator('#score').textContent(),'120');
+   assert.equal(await page.locator('#score').textContent(),'150');
    await page.locator('.tile').nth(24).focus();await page.keyboard.press('Space');
    assert.equal(await page.locator('#discovery-pop').isVisible(),false);
    await page.keyboard.press('Escape');
