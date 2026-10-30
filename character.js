@@ -7,8 +7,9 @@
   // HTMLの位置ではなく、このスクリプトと同じディレクトリから解決する。
   const scriptUrl = document.currentScript?.src || document.baseURI;
   const assetBase = new URL('assets/characters/', scriptUrl);
-  const IMAGE_VERSION = 'popun-20261029-1';
+  const IMAGE_VERSION = 'popun-20261030-2';
   const loaded = new Map();
+  const loading = new Set(), retryTimers = new Map();
   let state = 'idle', returnTimer = null;
   function display() {
     // 一部の表情が欠けている場合は通常画像、それもなければCSSの仮表示。
@@ -28,23 +29,29 @@
     }
   }
   function load(name, attempt = 0) {
+    if (loaded.has(name) || loading.has(name) || retryTimers.has(name)) return;
+    loading.add(name);
     const image = new Image();
     image.alt = ''; image.draggable = false; image.decoding = 'async';
     image.fetchPriority = name === 'idle' ? 'high' : 'low';
     let settled = false;
-    const timeout = setTimeout(failed, 12000);
     function failed() {
       if (settled) return;
-      settled = true; clearTimeout(timeout);
+      settled = true; loading.delete(name);
       image.onload = image.onerror = null;
       display();
       // 常時の再取得はせず、失敗した画像だけ最大2回までキャッシュを避けて再試行。
-      if (attempt < 2) setTimeout(() => load(name, attempt + 1), 1200 * (attempt + 1));
+      if (attempt < 2) retryTimers.set(name, setTimeout(() => {
+        retryTimers.delete(name);
+        load(name, attempt + 1);
+      }, 1200 * (attempt + 1)));
     }
     image.onload = () => {
       if (settled) return;
-      settled = true; clearTimeout(timeout);
+      // 時間で打ち切らず、遅れて届いた画像も最後まで受け取る。
+      settled = true;
       if (!image.naturalWidth || !image.naturalHeight) { settled = false; failed(); return; }
+      loading.delete(name);
       loaded.set(name, image); display();
     };
     image.onerror = failed;
@@ -54,6 +61,14 @@
     image.src = url.href;
   }
   for (const name of Object.keys(files)) load(name);
+  window.addEventListener('online', () => {
+    for (const name of Object.keys(files)) {
+      if (loaded.has(name) || loading.has(name)) continue;
+      clearTimeout(retryTimers.get(name)); retryTimers.delete(name);
+      // 復帰時も古いエラーキャッシュを避ける。進行中の取得は中断しない。
+      load(name, 1);
+    }
+  });
   globalThis.WordPopCharacter = {
     react(chain) {
       clearTimeout(returnTimer);
