@@ -64,7 +64,7 @@ const path = require('node:path');
     await enter([4, 5, 6]); // ZZZ は不正解。
     assert.equal(await page.locator('#score').textContent(), '30');
     await enter(await wordPath('ORANGE'));
-    await page.locator('#submit-button').dispatchEvent('click');
+    await page.keyboard.press('Enter');
     await page.clock.runFor(620);
     assert.equal(await page.locator('#score').textContent(), '150');
     assert.equal(await page.locator('#found-count').textContent(), '2');

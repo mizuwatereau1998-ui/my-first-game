@@ -285,11 +285,6 @@ button:disabled {
   color:#125c9d;
   letter-spacing:3px;
 }
-#word-length {
-  font-size:10px;
-  white-space:nowrap;
-  color:#6394ae;
-}
 .board {
   position:relative;
   padding:13px;
@@ -1189,11 +1184,10 @@ dialog p,dialog li {
 /* 画像ごとの顔位置を合わせ、全身ポーズの下部だけをフレーム裏へ隠す。 */
 .character-space[data-pop-state="correct"] #pop-image img { width:112%;height:112%;left:-14%;top:4%; }
 .character-space[data-pop-state="chain2"] #pop-image img,.character-space[data-pop-state="chain3"] #pop-image img { width:108%;height:108%;left:-4%;top:8%; }
-.play-hud { position:relative;display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:9px 12px;margin-top:23px;padding:12px;border:3px solid #e8faff;border-radius:24px;background:linear-gradient(#80cfee,#509dcc);box-shadow:inset 0 2px #c8f4ff,inset 0 -3px #3e81b1,0 4px #2f719e,0 7px 13px #36729d26; }
-.play-hud .word-tray { min-height:48px;margin:0;border:2px solid #d3f6ff;border-radius:14px;background:linear-gradient(#fffef4,#fff4d8);box-shadow:inset 0 3px 4px #9eb6b74d;padding:7px 12px; }
+.play-hud { position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:9px 12px;margin-top:23px;padding:12px;border:3px solid #e8faff;border-radius:24px;background:linear-gradient(#80cfee,#509dcc);box-shadow:inset 0 2px #c8f4ff,inset 0 -3px #3e81b1,0 4px #2f719e,0 7px 13px #36729d26; }
+.play-hud .word-tray { justify-content:center;min-height:48px;margin:0;border:2px solid #d3f6ff;border-radius:14px;background:linear-gradient(#fffef4,#fff4d8);box-shadow:inset 0 3px 4px #9eb6b74d;padding:7px 12px; }
 .word-preview { color:#305f81;font-size:14px;font-weight:700; }
 .word-preview.active { font-family:var(--game-font);font-size:27px;letter-spacing:2px; }
-#word-length { color:#3d6480;font-size:12px;font-weight:750; }
 .text-button { font-size:17px;font-weight:850;min-height:48px;border:2px solid #fff2b4;border-radius:14px;color:#6f421c;background:linear-gradient(#ffeaaa,#ffd16a 50%,#ffb941);box-shadow:inset 0 2px #fff6ca,inset 0 -3px #e9a137,0 3px #aa7433;text-shadow:0 1px #fff5c5; }
 .game-bottom { grid-column:1/-1;justify-content:center;border:0;padding:0;color:#fff;font-size:12px;font-weight:650; }
 .chain-banner { position:absolute;z-index:6;left:50%;top:-22px;transform:translateX(-50%) rotate(-3deg);margin:0;white-space:nowrap;border:3px solid #fff7c7;border-radius:18px;padding:7px 22px;color:#a44925;background:linear-gradient(#fff1b0,#ffc64b);box-shadow:0 3px #b97735,0 4px 12px #91613240;font-family:var(--game-font);font-size:22px;line-height:1;letter-spacing:1px;pointer-events:none; }
@@ -1217,11 +1211,10 @@ dialog p,dialog li {
   .game-panel { padding-top:86px; }
   .sidebar { padding-top:0; }
   #pop-image { width:180px;height:180px;left:calc(50% - 90px);bottom:-8px; }
-  .play-hud { padding:9px;gap:8px;margin-top:21px;grid-template-columns:minmax(0,1fr) 68px;border-radius:20px; }
+  .play-hud { padding:9px;gap:8px;margin-top:21px;grid-template-columns:minmax(0,1fr);border-radius:20px; }
   .play-hud .word-tray { min-height:45px;padding:6px 8px;gap:5px; }
   .word-preview { font-size:12px; }
   .word-preview.active { font-size:23px;letter-spacing:1px; }
-  #word-length { font-size:11px; }
   .text-button { font-size:15px;min-height:45px;padding:5px; }
   .game-bottom { font-size:11px; }
   .chain-banner { font-size:19px;top:-21px;padding:6px 18px; }

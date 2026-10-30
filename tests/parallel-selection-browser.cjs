@@ -67,7 +67,7 @@ const path = require('node:path');
       await page.clock.runFor(1400);
       assert.equal(await page.locator('#board').getAttribute('aria-busy'), 'true');
       await release();
-      await page.locator('#submit-button').dispatchEvent('click');
+      await page.keyboard.press('Enter');
       await page.clock.runFor(520 + 620);
       assert.equal(await page.locator('#score').textContent(), '600');
       assert.equal(await page.locator('#found-count').textContent(), '5');

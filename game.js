@@ -66,7 +66,7 @@
     $('chain-banner').hidden = true;
     boardElement.setAttribute('aria-busy', 'false');
     boardElement.setAttribute('aria-disabled', 'true');
-    for (const id of ['submit-button','restart-button','shuffle-button','help-button']) $(id).disabled = true;
+    for (const id of ['restart-button','shuffle-button','help-button']) $(id).disabled = true;
     globalThis.WordPopCharacter?.reset();
     $('result-score').textContent = score;
     $('result-count').textContent = found.length;
@@ -201,7 +201,6 @@
   function setBusy(value) {
     busy = value;
     $('restart-button').disabled = value;
-    $('submit-button').disabled = value;
     boardElement.setAttribute('aria-busy', String(value));
   }
   function message(text, error = false) {
@@ -236,7 +235,6 @@
     const word = path.map(index => board[index]).join('');
     $('word-preview').textContent = word || '';
     $('word-preview').classList.toggle('active', !!word);
-    $('word-length').textContent = `${path.length} / 6`;
     drawPath();
   }
   function render(distances = []) {
@@ -450,7 +448,7 @@
     remainingMs = selectedSeconds * 1000; maxChain = 0; busy = false; updateClock();
     boardElement.setAttribute('aria-disabled', 'false');
     boardElement.setAttribute('aria-busy', 'false');
-    for (const id of ['submit-button','restart-button','shuffle-button','help-button']) $(id).disabled = false;
+    for (const id of ['restart-button','shuffle-button','help-button']) $(id).disabled = false;
     clearIdleHint();
     hideDiscovery();
     globalThis.WordPopMotion?.clear();
@@ -528,7 +526,6 @@
     else if (event.key === 'Enter') { event.preventDefault(); submit(); }
     else if (event.key === 'Escape') { event.preventDefault(); cancel(); }
   });
-  $('submit-button').addEventListener('click', submit);
   $('restart-button').addEventListener('click', () => {
     if (busy || !canInteract()) return;
     pauseClock();
